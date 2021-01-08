@@ -16,12 +16,10 @@ private:
   void interrupt_handler();
   int _count;
 
-  int64_t _last_triggered;
-
 public:
   RotaryEncoder(gpio_num_t clck_pin, gpio_num_t di_pin);
   ~RotaryEncoder();
-  int get_count() { return _count; }
+  int get_count();
   friend void _interrupt_handler(void *param);
   friend void _rotary_decoder_task(void *param);
 };

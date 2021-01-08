@@ -4,6 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "RenderBuffer.hpp"
+#include "Controls.hpp"
 
 void IRAM_ATTR timer_group1_isr(void *param)
 {
@@ -29,6 +30,10 @@ void game_task(void *param)
       game_loop->game->stepWorld(1.0 / 60.0);
       game_loop->render_buffer->render_if_needed(game_loop->game);
       game_loop->steps++;
+      if (game_loop->steps % 60 == 1)
+      {
+        printf("In game loop direction %.2f\n", 180.0f * game_loop->game->controls->get_direction() / 180.0f);
+      }
     }
   }
 }
@@ -36,7 +41,7 @@ void game_task(void *param)
 void GameLoop::start()
 {
   // start the world
-  xTaskCreatePinnedToCore(game_task, "Game Loop", 2048, this, 1, &game_task_handle, 0);
+  xTaskCreatePinnedToCore(game_task, "Game Loop", 4096, this, 1, &game_task_handle, 0);
   // set up the renderer timer
   timer_config_t config = {
       .alarm_en = TIMER_ALARM_EN,

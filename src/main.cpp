@@ -8,10 +8,12 @@
 #include "DACRenderer.h"
 #include "GameLoop.h"
 #include "Game.hpp"
+#include "RotaryEncoder.hpp"
+#include "ESP32Controls.hpp"
 
 #define WORLD_SIZE 30
-#define ROTARY_ENCODER_CLK
-#define ROTARY_ENCODER_DI
+#define ROTARY_ENCODER_CLK GPIO_NUM_18
+#define ROTARY_ENCODER_DI GPIO_NUM_5
 
 extern "C"
 {
@@ -35,8 +37,11 @@ void app_main()
       128 / WORLD_SIZE);
 
   // free_ram = esp_get_free_heap_size();
+  printf("Creating controls\n");
+  RotaryEncoder *rotary_encoder = new RotaryEncoder(ROTARY_ENCODER_CLK, ROTARY_ENCODER_DI);
+  ESP32Controls *controls = new ESP32Controls(rotary_encoder);
   printf("Starting world\n");
-  Game *game = new Game();
+  Game *game = new Game(controls);
   game->createWorld(WORLD_SIZE);
 
   GameLoop *game_loop = new GameLoop(game, render_buffer);
@@ -46,7 +51,7 @@ void app_main()
   printf("Free ram after world %d\n", free_ram);
 
   printf("Starting renderer\n");
-  Renderer *renderer = new DACRenderer(render_buffer);
+  Renderer *renderer = new SPIRenderer(render_buffer);
   renderer->start();
 
   free_ram = esp_get_free_heap_size();
@@ -61,6 +66,7 @@ void app_main()
     printf("Elapsed time = %lld\n", end - start);
     free_ram = esp_get_free_heap_size();
     printf("Free ram %d\n", free_ram);
+    printf("Direction %d, %.1f\n", rotary_encoder->get_count(), 180.0f * controls->get_direction() / M_PI);
   }
   renderer->stop();
   printf("Stopped renderer timer - reboot in 5 seconds\n");

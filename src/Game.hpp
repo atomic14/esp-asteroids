@@ -16,6 +16,7 @@
 class b2World;
 class GameObject;
 class RenderBuffer;
+class Controls;
 class Game : public b2ContactListener
 {
 private:
@@ -26,16 +27,15 @@ private:
     std::set<GameObject *> hitAsteroids;
     std::set<GameObject *> deadBullets;
     int _size;
+    float firing_cooldown;
 
 public:
+    Controls *controls;
+
+    Game(Controls *controls) : controls(controls){};
     void createWorld(int size);
     void stepWorld(float elapsedTime);
     std::list<GameObject *> &getObjects() { return objects; }
-
-    void spinLeft();
-    void spinRight();
-    void thrust();
-    void fire();
 
     void BeginContact(b2Contact *contact);
     void EndContact(b2Contact *contact);
