@@ -51,7 +51,7 @@ void app_main()
   printf("Free ram after world %d\n", free_ram);
 
   printf("Starting renderer\n");
-  Renderer *renderer = new SPIRenderer(render_buffer);
+  Renderer *renderer = new DACRenderer(render_buffer);
   renderer->start();
 
   free_ram = esp_get_free_heap_size();
