@@ -3,10 +3,12 @@
 
 #include "Renderer.h"
 
+class RenderBuffer;
+
 class DACRenderer : public Renderer
 {
 public:
-  DACRenderer(Game *game) : Renderer(game)
+  DACRenderer(RenderBuffer *render_buffer) : Renderer(render_buffer)
   {
   }
   void start();

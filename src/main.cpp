@@ -3,9 +3,15 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "WiFi.h"
+#include "RenderBuffer.hpp"
 #include "SPIRenderer.h"
 #include "DACRenderer.h"
-#include "ESP32Game.h"
+#include "GameLoop.h"
+#include "Game.hpp"
+
+#define WORLD_SIZE 30
+#define ROTARY_ENCODER_CLK
+#define ROTARY_ENCODER_DI
 
 extern "C"
 {
@@ -14,36 +20,33 @@ extern "C"
 
 void app_main()
 {
-  //Initialize NVS
-  esp_err_t ret = nvs_flash_init();
-  if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-  {
-    ESP_ERROR_CHECK(nvs_flash_erase());
-    ret = nvs_flash_init();
-  }
-  ESP_ERROR_CHECK(ret);
-
+  vTaskDelay(2000 / portTICK_PERIOD_MS);
   printf("Started Up!\n");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
 
   uint32_t free_ram = esp_get_free_heap_size();
-  printf("Free ram before wifi %d\n", free_ram);
+  printf("Free ram before setup %d\n", free_ram);
 
-  // wifi_init_sta();
+  // suitable values for the DAC Renderer
+  RenderBuffer *render_buffer = new RenderBuffer(
+      0, 255,
+      0, 255,
+      128,
+      128,
+      128 / WORLD_SIZE);
 
   // free_ram = esp_get_free_heap_size();
-  printf("Free ram after wifi %d\n", free_ram);
-
   printf("Starting world\n");
-  ESP32Game *game = new ESP32Game();
-  game->createWorld();
-  game->start();
+  Game *game = new Game();
+  game->createWorld(WORLD_SIZE);
+
+  GameLoop *game_loop = new GameLoop(game, render_buffer);
+  game_loop->start();
 
   free_ram = esp_get_free_heap_size();
   printf("Free ram after world %d\n", free_ram);
 
   printf("Starting renderer\n");
-  Renderer *renderer = new DACRenderer(game);
+  Renderer *renderer = new DACRenderer(render_buffer);
   renderer->start();
 
   free_ram = esp_get_free_heap_size();
@@ -53,7 +56,7 @@ void app_main()
   {
     int64_t start = esp_timer_get_time();
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    printf("%d, World steps %d, Rendered %d frames, %d SPI packets, %d LDAC toggles, %d failures\n", i, game->steps, renderer->renders, renderer->sample_send_success, renderer->ldac_calls, renderer->sample_send_fail);
+    printf("%d, World steps %d, Rendered %d frames, %d SPI packets, %d LDAC toggles, %d failures\n", i, game_loop->steps, renderer->renders, renderer->sample_send_success, renderer->ldac_calls, renderer->sample_send_fail);
     int64_t end = esp_timer_get_time();
     printf("Elapsed time = %lld\n", end - start);
     free_ram = esp_get_free_heap_size();

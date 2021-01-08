@@ -1,12 +1,14 @@
-#include "ESP32Game.h"
+#include "GameLoop.h"
+#include "Game.hpp"
 #include "driver/timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "RenderBuffer.hpp"
 
 void IRAM_ATTR timer_group1_isr(void *param)
 {
   timer_spinlock_take(TIMER_GROUP_1);
-  ESP32Game *game = static_cast<ESP32Game *>(param);
+  GameLoop *game = static_cast<GameLoop *>(param);
   // Clear the interrupt
   timer_group_clr_intr_status_in_isr(TIMER_GROUP_1, TIMER_0);
   timer_group_enable_alarm_in_isr(TIMER_GROUP_1, TIMER_0);
@@ -16,7 +18,7 @@ void IRAM_ATTR timer_group1_isr(void *param)
 
 void game_task(void *param)
 {
-  ESP32Game *game = static_cast<ESP32Game *>(param);
+  GameLoop *game_loop = static_cast<GameLoop *>(param);
 
   const TickType_t xMaxBlockTime = pdMS_TO_TICKS(100);
   while (true)
@@ -24,14 +26,14 @@ void game_task(void *param)
     uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
     if (ulNotificationValue > 0)
     {
-      game->stepWorld(1.0 / 60.0);
-      game->render();
-      game->steps++;
+      game_loop->game->stepWorld(1.0 / 60.0);
+      game_loop->render_buffer->render_if_needed(game_loop->game);
+      game_loop->steps++;
     }
   }
 }
 
-void ESP32Game::start()
+void GameLoop::start()
 {
   // start the world
   xTaskCreatePinnedToCore(game_task, "Game Loop", 2048, this, 1, &game_task_handle, 0);

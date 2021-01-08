@@ -12,10 +12,10 @@
 #include <set>
 #include <vector>
 #include "box2d/box2d.h"
-#include "Drawing.hpp"
 
 class b2World;
 class GameObject;
+class RenderBuffer;
 class Game : public b2ContactListener
 {
 private:
@@ -25,12 +25,10 @@ private:
     std::list<GameObject *> bullets;
     std::set<GameObject *> hitAsteroids;
     std::set<GameObject *> deadBullets;
+    int _size;
 
 public:
-    volatile bool needs_render = false;
-    std::vector<DrawInstruction_t> *render_buffer = NULL;
-
-    void createWorld();
+    void createWorld(int size);
     void stepWorld(float elapsedTime);
     std::list<GameObject *> &getObjects() { return objects; }
 
@@ -41,9 +39,6 @@ public:
 
     void BeginContact(b2Contact *contact);
     void EndContact(b2Contact *contact);
-
-    void render();
-    void renderSegment(bool laser, float maxLineLength, b2Vec2 start, const b2Vec2 &end);
 };
 
 #endif /* Game_hpp */

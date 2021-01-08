@@ -52,8 +52,9 @@ static const b2Vec2 asteroid3Points[] = {
     b2Vec2(-0.23928572899887535, -0.3660714140607422)};
 static const int asteroid3PointsCount = 7;
 
-void Game::createWorld()
+void Game::createWorld(int size)
 {
+    _size = size;
     // no gravity in our world
     b2Vec2 gravity(0.0f, 0.0f);
     world = new b2World(gravity);
@@ -66,9 +67,9 @@ void Game::createWorld()
     objects.push_back(new GameObject(ASTEROID, world, asteroid2Points, asteroid2PointsCount, b2Vec2(-25, -25), 0, b2Vec2(-10, 10), 0, 10));
     objects.push_back(new GameObject(ASTEROID, world, asteroid3Points, asteroid3PointsCount, b2Vec2(-25, 0), 0, b2Vec2(-10, -10), 0, 10));
 
-    objects.push_back(new GameObject(ASTEROID, world, asteroid1Points, asteroid1PointsCount, b2Vec2(0, 25), 0, b2Vec2(10, 10), 0, 10));
-    objects.push_back(new GameObject(ASTEROID, world, asteroid2Points, asteroid2PointsCount, b2Vec2(-25, 0), 0, b2Vec2(-10, 10), 0, 10));
-    objects.push_back(new GameObject(ASTEROID, world, asteroid3Points, asteroid3PointsCount, b2Vec2(-25, 5), 0, b2Vec2(-10, -10), 0, 10));
+    //    objects.push_back(new GameObject(ASTEROID, world, asteroid1Points, asteroid1PointsCount, b2Vec2(0, 25), 0, b2Vec2(10, 10), 0, 10));
+    //    objects.push_back(new GameObject(ASTEROID, world, asteroid2Points, asteroid2PointsCount, b2Vec2(-25, 0), 0, b2Vec2(-10, 10), 0, 10));
+    //    objects.push_back(new GameObject(ASTEROID, world, asteroid3Points, asteroid3PointsCount, b2Vec2(-25, 5), 0, b2Vec2(-10, -10), 0, 10));
 
     world->SetContactListener(this);
 }
@@ -79,21 +80,21 @@ void Game::stepWorld(float elapsedTime)
     for (auto object : this->objects)
     {
         auto position = object->getPosition();
-        if (position.x < -50)
+        if (position.x < -_size)
         {
-            position.x = 50;
+            position.x = _size;
         }
-        else if (position.x > 50)
+        else if (position.x > _size)
         {
-            position.x = -50;
+            position.x = -_size;
         }
-        if (position.y < -50)
+        if (position.y < -_size)
         {
-            position.y = 50;
+            position.y = _size;
         }
-        else if (position.y > 50)
+        else if (position.y > _size)
         {
-            position.y = -50;
+            position.y = -_size;
         }
         object->setPosition(position);
     }
@@ -166,13 +167,6 @@ void Game::stepWorld(float elapsedTime)
     }
     deadBullets.clear();
     hitAsteroids.clear();
-
-    // render the world if required
-    if (needs_render && render_buffer)
-    {
-        render();
-        needs_render = false;
-    }
 }
 
 void Game::BeginContact(b2Contact *contact)
@@ -222,89 +216,4 @@ void Game::fire()
 
     objects.push_back(bullet);
     bullets.push_back(bullet);
-}
-
-#define MAX_MOVE_LENGTH 2
-#define MAX_LINE_LENGTH 1
-
-void Game::renderSegment(bool laser, float maxLineLength, b2Vec2 start, const b2Vec2 &end)
-{
-    auto vector = end - start;
-    auto length = vector.Length();
-    auto invLength = 1.0f / length;
-    auto step = invLength * vector;
-    // start of the segment
-    render_buffer->push_back({.x = uint16_t(std::max(std::min(255.0f, 128 + 2.0f * start.x), 0.0f)),
-                              .y = uint16_t(std::max(std::min(255.0f, 128 + 2.0f * start.y), 0.0f)),
-                              .laser = laser});
-    // move in steps
-    while (length > maxLineLength)
-    {
-        length -= maxLineLength;
-        start += maxLineLength * step;
-        render_buffer->push_back({.x = uint16_t(std::max(std::min(255.0f, 128.0f + 2.0f * start.x), 0.0f)),
-                                  .y = uint16_t(std::max(std::min(255.0f, 128.0f + 2.0f * start.y), 0.0f)),
-                                  .laser = laser});
-    }
-    // do the remaining line
-    if (length > 0)
-    {
-        start += length * step;
-        render_buffer->push_back({.x = uint16_t(std::max(std::min(255.0f, 128.0f + 2.0f * start.x), 0.0f)),
-                                  .y = uint16_t(std::max(std::min(255.0f, 128.0f + 2.0f * start.y), 0.0f)),
-                                  .laser = laser});
-    }
-}
-
-GameObject *removeNearest(b2Vec2 search_point, std::list<GameObject *> &objects)
-{
-    GameObject *nearest_object = NULL;
-    float nearest_distance = FLT_MAX;
-    for (auto object : objects)
-    {
-        auto distance = (object->getPosition() - search_point).LengthSquared();
-        if (distance < nearest_distance)
-        {
-            nearest_distance = distance;
-            nearest_object = object;
-        }
-    }
-    objects.remove(nearest_object);
-    return nearest_object;
-}
-
-void Game::render()
-{
-    render_buffer->clear();
-    // assume we start from 0,0 - we might optimise this later to start from the last drawn location
-    b2Vec2 cur(0, 0);
-    std::list<GameObject *> objects_to_draw(objects);
-    // while we still have objects to draw
-    while (objects_to_draw.size() > 0)
-    {
-        // get the nearest object to the current search_point
-        auto object = removeNearest(cur, objects_to_draw);
-        auto numPoints = object->getNumPoints();
-        auto points = object->getPoints();
-        auto position = object->getPosition();
-        auto angle = object->getAngle();
-        auto c = cos(angle);
-        auto s = sin(angle);
-        // move to the start of the object
-        renderSegment(false, MAX_MOVE_LENGTH, cur, points[0] + position);
-        auto start = b2Vec2(points[0].x * c - points[0].y * s, points[0].x * s + points[0].y * c) + position;
-        cur = start;
-        for (int i = 0; i < numPoints; i++)
-        {
-            // draw each line segment
-            auto p = b2Vec2(points[i].x * c - points[i].y * s, points[i].x * s + points[i].y * c) + position;
-            renderSegment(true, MAX_LINE_LENGTH, cur, p);
-            cur = p;
-        }
-        // close the line
-        renderSegment(true, MAX_LINE_LENGTH, cur, start);
-        cur = start;
-    }
-    // move back to 0,0 ready for the next draw pass
-    renderSegment(false, MAX_MOVE_LENGTH, cur, b2Vec2(0, 0));
 }

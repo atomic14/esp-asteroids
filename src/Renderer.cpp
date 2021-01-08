@@ -1,4 +1,3 @@
-#include <cstring>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "Renderer.h"
@@ -11,21 +10,13 @@ void IRAM_ATTR draw_timer(void *para)
 {
   timer_spinlock_take(TIMER_GROUP_0);
   Renderer *renderer = static_cast<Renderer *>(para);
-
-  // uint32_t timer_intr = timer_group_get_intr_status_in_isr(TIMER_GROUP_0);
-  // uint64_t timer_counter_value = timer_group_get_counter_value_in_isr(TIMER_GROUP_0, TIMER_0);
-
   renderer->renders++;
-
   // Clear the interrupt
   timer_group_clr_intr_status_in_isr(TIMER_GROUP_0, TIMER_0);
-
-  // After the alarm has been triggered
-  //     we need enable it again, so it is triggered the next time
+  // After the alarm has been triggered we need enable it again, so it is triggered the next time
   timer_group_enable_alarm_in_isr(TIMER_GROUP_0, TIMER_0);
-
+  // tell the drawing task to do something
   xTaskNotifyFromISR(renderer->draw_task_handle, 1, eIncrement, NULL);
-
   timer_spinlock_give(TIMER_GROUP_0);
 }
 
@@ -46,42 +37,34 @@ void IRAM_ATTR draw_task(void *param)
 
 void IRAM_ATTR Renderer::_draw()
 {
-  if (draw_position < display_buffer1->size())
+  // do we still have things to draw?
+  if (draw_position < render_buffer->display_frame->size())
   {
-    draw((*display_buffer1)[draw_position]);
+    // draw the next sample
+    draw((*render_buffer->display_frame)[draw_position]);
     draw_position++;
   }
-  if (draw_position >= display_buffer1->size())
+  else
   {
-    if (!game->needs_render)
-    {
-      std::swap(display_buffer1, display_buffer2);
-      game->render_buffer = display_buffer2;
-      game->needs_render = true;
-    }
+    // trigger a re-render
+    render_buffer->swapBuffers();
     draw_position = 0;
   }
 }
 
-Renderer::Renderer(Game *game) : game(game)
+Renderer::Renderer(RenderBuffer *render_buffer) : render_buffer(render_buffer)
 {
   // stats
   renders = 0;
   sample_send_success = 0;
   ldac_calls = 0;
   sample_send_fail = 0;
-  // render instructions
-  display_buffer1 = new std::vector<DrawInstruction_t>();
-  display_buffer2 = new std::vector<DrawInstruction_t>();
-  game->render_buffer = display_buffer2;
-  game->needs_render = true;
   // current drawing position
   draw_position = 0;
 }
 
 void Renderer::start()
 {
-
   // setup the LDAC output
   gpio_set_direction(PIN_NUM_LDAC, GPIO_MODE_OUTPUT);
   // setup the laser output
@@ -97,7 +80,7 @@ void Renderer::start()
       .intr_type = TIMER_INTR_LEVEL,
       .counter_dir = TIMER_COUNT_UP,
       .auto_reload = TIMER_AUTORELOAD_EN,
-      .divider = 8000}; // default clock source is APB
+      .divider = 4000}; // default clock source is APB
   timer_init(TIMER_GROUP_0, TIMER_0, &config);
 
   // Timer's counter will initially start from value below.
