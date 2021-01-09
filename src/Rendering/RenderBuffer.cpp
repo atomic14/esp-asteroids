@@ -7,23 +7,24 @@
 
 #include "RenderBuffer.hpp"
 #include "box2d/box2d.h"
-#include "GameObject.hpp"
-#include "Game.hpp"
+#include "../Game/GameObject.hpp"
+#include "../Game/Game.hpp"
 #include <list>
 
 #define MAX_MOVE_LENGTH 2
 #define MAX_LINE_LENGTH 1
 
-RenderBuffer::RenderBuffer(int minX, int maxX, int minY, int maxY, int centerX, int centerY, float scale) {
+RenderBuffer::RenderBuffer(int minX, int maxX, int minY, int maxY, int centerX, int centerY, float scale)
+{
     display_frame = new std::vector<DrawInstruction_t>(500);
     drawing_frame = new std::vector<DrawInstruction_t>(500);
-    _minX=minX;
-    _minY=minY;
-    _maxX=maxX;
-    _maxY=maxY;
-    _centerX=centerX;
-    _centerY=centerY;
-    _scale=scale;
+    _minX = minX;
+    _minY = minY;
+    _maxX = maxX;
+    _maxY = maxY;
+    _centerX = centerX;
+    _centerY = centerY;
+    _scale = scale;
 }
 
 void RenderBuffer::renderSegment(bool laser, float maxLineLength, b2Vec2 start, const b2Vec2 &end)
@@ -42,7 +43,7 @@ void RenderBuffer::renderSegment(bool laser, float maxLineLength, b2Vec2 start, 
         length -= maxLineLength;
         start += maxLineLength * step;
         drawing_frame->push_back({.x = calc_x(start.x),
-            .y = calc_y(start.y),
+                                  .y = calc_y(start.y),
                                   .laser = laser});
     }
     // do the remaining line
@@ -50,7 +51,7 @@ void RenderBuffer::renderSegment(bool laser, float maxLineLength, b2Vec2 start, 
     {
         start += length * step;
         drawing_frame->push_back({.x = calc_x(start.x),
-                                 .y = calc_y(start.y),
+                                  .y = calc_y(start.y),
                                   .laser = laser});
     }
 }
@@ -74,7 +75,8 @@ GameObject *removeNearest(b2Vec2 search_point, std::list<GameObject *> &objects)
 
 void RenderBuffer::render_if_needed(Game *game)
 {
-    if (needs_render) {
+    if (needs_render)
+    {
         drawing_frame->clear();
         // assume we start from 0,0 - we might optimise this later to start from the last drawn location
         b2Vec2 cur(0, 0);
@@ -112,10 +114,11 @@ void RenderBuffer::render_if_needed(Game *game)
     }
 }
 
-
-bool RenderBuffer::swapBuffers() {
+bool RenderBuffer::swapBuffers()
+{
     // check to see if the other buffer is ready
-    if (needs_render) {
+    if (needs_render)
+    {
         // if it's not don't swap as there's nothing to swap to!
         return false;
     }

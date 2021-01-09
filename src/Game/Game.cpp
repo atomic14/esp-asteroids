@@ -8,7 +8,7 @@
 #include "Game.hpp"
 #include "box2d/box2d.h"
 #include "GameObject.hpp"
-#include "Controls.hpp"
+#include "../Controls/Controls.hpp"
 #include <set>
 
 #define MAX_BULLETS_INFLIGHT 5

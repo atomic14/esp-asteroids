@@ -4,7 +4,7 @@
 #include "driver/timer.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
-#include "Game.hpp"
+#include "../Game/Game.hpp"
 
 void IRAM_ATTR draw_timer(void *para)
 {

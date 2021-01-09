@@ -3,8 +3,8 @@
 #include "driver/timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "RenderBuffer.hpp"
-#include "Controls.hpp"
+#include "../Rendering/RenderBuffer.hpp"
+#include "../Controls/Controls.hpp"
 
 void IRAM_ATTR timer_group1_isr(void *param)
 {

@@ -3,13 +3,13 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "WiFi.h"
-#include "RenderBuffer.hpp"
-#include "SPIRenderer.h"
-#include "DACRenderer.h"
-#include "GameLoop.h"
-#include "Game.hpp"
-#include "RotaryEncoder.hpp"
-#include "ESP32Controls.hpp"
+#include "Rendering/RenderBuffer.hpp"
+#include "Rendering/SPIRenderer.h"
+#include "Rendering/DACRenderer.h"
+#include "Game/GameLoop.h"
+#include "Game/Game.hpp"
+#include "Controls/RotaryEncoder.hpp"
+#include "Controls/ESP32Controls.hpp"
 
 #define WORLD_SIZE 30
 #define ROTARY_ENCODER_CLK GPIO_NUM_18
