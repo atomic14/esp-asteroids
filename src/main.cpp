@@ -14,6 +14,7 @@
 #define WORLD_SIZE 30
 #define ROTARY_ENCODER_CLK GPIO_NUM_18
 #define ROTARY_ENCODER_DI GPIO_NUM_5
+#define ROTARY_ENCODER_BUTTON GPIO_NUM_19
 
 extern "C"
 {
@@ -38,7 +39,7 @@ void app_main()
 
   // free_ram = esp_get_free_heap_size();
   printf("Creating controls\n");
-  RotaryEncoder *rotary_encoder = new RotaryEncoder(ROTARY_ENCODER_CLK, ROTARY_ENCODER_DI);
+  RotaryEncoder *rotary_encoder = new RotaryEncoder(ROTARY_ENCODER_CLK, ROTARY_ENCODER_DI, ROTARY_ENCODER_BUTTON);
   ESP32Controls *controls = new ESP32Controls(rotary_encoder);
   printf("Starting world\n");
   Game *game = new Game(controls);
@@ -61,7 +62,7 @@ void app_main()
   {
     int64_t start = esp_timer_get_time();
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    printf("%d, World steps %d, Rendered %d frames, %d SPI packets, %d LDAC toggles, %d failures\n", i, game_loop->steps, renderer->renders, renderer->sample_send_success, renderer->ldac_calls, renderer->sample_send_fail);
+    printf("%d, World steps %d, Requested samples %d, Sent samples %d, Output toggles %d, Send failed %d\n", i, game_loop->steps, renderer->requested_sends, renderer->send_success, renderer->output_calls, renderer->send_fail);
     int64_t end = esp_timer_get_time();
     printf("Elapsed time = %lld\n", end - start);
     free_ram = esp_get_free_heap_size();

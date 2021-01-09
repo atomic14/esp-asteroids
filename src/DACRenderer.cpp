@@ -20,12 +20,19 @@ void DACRenderer::stop()
   dac_output_disable(DAC_CHANNEL_2);
 }
 
-void IRAM_ATTR DACRenderer::draw(const DrawInstruction_t &instruction)
+void IRAM_ATTR DACRenderer::trigger_draw()
+{
+  // no need to do anything special just draw straight away
+  draw();
+}
+
+void IRAM_ATTR DACRenderer::draw_sample(const DrawInstruction_t &instruction)
 {
   gpio_set_level(PIN_NUM_LASER, instruction.laser ? 1 : 0);
   uint8_t output_x = instruction.x;
   uint8_t output_y = instruction.y;
   dac_output_voltage(DAC_CHANNEL_1, output_x);
   dac_output_voltage(DAC_CHANNEL_2, output_y);
-  sample_send_success++;
+  send_success++;
+  output_calls++;
 }

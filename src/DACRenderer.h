@@ -7,13 +7,16 @@ class RenderBuffer;
 
 class DACRenderer : public Renderer
 {
+
 public:
   DACRenderer(RenderBuffer *render_buffer) : Renderer(render_buffer)
   {
   }
   void start();
   void stop();
-  virtual void draw(const DrawInstruction_t &instruction);
+
+  void IRAM_ATTR trigger_draw();
+  void IRAM_ATTR draw_sample(const DrawInstruction_t &instruction);
 };
 
 #endif

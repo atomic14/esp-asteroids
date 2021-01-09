@@ -17,22 +17,28 @@ private:
   int draw_position;
   RenderBuffer *render_buffer;
 
-  void _draw();
-
 public:
-  TaskHandle_t draw_task_handle;
-  int renders = 0;
-  int sample_send_success = 0;
-  int ldac_calls = 0;
-  int sample_send_fail = 0;
+  int requested_sends = 0;
+  int send_success = 0;
+  int output_calls = 0;
+  int send_fail = 0;
 
   Renderer(RenderBuffer *render_buffer);
 
   virtual void start();
   virtual void stop();
-  virtual void draw(const DrawInstruction_t &instruction) = 0;
+
+  // override this in derived classes with logic to tigger the draw method
+  // For example
+  // - the DAC renderer just calls the _draw function directly
+  // - the SPI renderer triggers a task that calls the _draw function as it's got to a lot more work
+  virtual void trigger_draw() = 0;
+  // draw and move to the next sample
+  void draw();
+  // do the actual drawing of a sample - override in derived classes to do the actual work
+  virtual void draw_sample(const DrawInstruction_t &instruction) = 0;
+
   friend void draw_timer(void *para);
-  friend void draw_task(void *param);
 };
 
 #endif

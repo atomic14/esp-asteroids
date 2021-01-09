@@ -3,13 +3,22 @@
 #include <esp_timer.h>
 #include "RotaryEncoder.hpp"
 
-IRAM_ATTR void _interrupt_handler(void *param)
+IRAM_ATTR void _rotary_interrupt_handler(void *param)
 {
   auto rotary_encoder = static_cast<RotaryEncoder *>(param);
   gpio_intr_disable(rotary_encoder->_clck_pin);
   // capture the value of the di pin now and send it to the task
   int di = gpio_get_level(rotary_encoder->_di_pin);
   xTaskNotifyFromISR(rotary_encoder->_rotary_decoder_task_handle, 2 | di, eSetBits, NULL);
+}
+
+IRAM_ATTR void _push_button_interrupt_handler(void *param)
+{
+  // TODO - do we need some debounce here?
+  auto rotary_encoder = static_cast<RotaryEncoder *>(param);
+  int pushed = gpio_get_level(rotary_encoder->_button_pin);
+
+  rotary_encoder->was_button_pushed = !pushed;
 }
 
 void _rotary_decoder_task(void *param)
@@ -44,23 +53,41 @@ void _rotary_decoder_task(void *param)
   }
 }
 
-RotaryEncoder::RotaryEncoder(gpio_num_t clck_pin, gpio_num_t di_pin)
+RotaryEncoder::RotaryEncoder(gpio_num_t clck_pin, gpio_num_t di_pin, gpio_num_t button_pin)
 {
   xTaskCreate(_rotary_decoder_task, "Rotary Decode", 4096, this, 0, &_rotary_decoder_task_handle);
   _count = 0;
   _clck_pin = clck_pin;
   _di_pin = di_pin;
+  _button_pin = button_pin;
   gpio_install_isr_service(0);
   gpio_set_direction(clck_pin, GPIO_MODE_INPUT);
   gpio_set_direction(di_pin, GPIO_MODE_INPUT);
+  gpio_set_direction(button_pin, GPIO_MODE_INPUT);
+
   gpio_set_intr_type(clck_pin, GPIO_INTR_ANYEDGE);
-  gpio_isr_handler_add(clck_pin, _interrupt_handler, this);
+  gpio_isr_handler_add(clck_pin, _rotary_interrupt_handler, this);
+  gpio_intr_enable(clck_pin);
+
+  gpio_set_intr_type(button_pin, GPIO_INTR_NEGEDGE);
+  gpio_isr_handler_add(button_pin, _push_button_interrupt_handler, this);
   gpio_intr_enable(clck_pin);
 }
 
 int RotaryEncoder::get_count()
 {
   return _count;
+}
+
+bool RotaryEncoder::get_button_pushed()
+{
+  if (was_button_pushed)
+  {
+    printf("Fire\n");
+    was_button_pushed = false;
+    return true;
+  }
+  return false;
 }
 
 RotaryEncoder::~RotaryEncoder()

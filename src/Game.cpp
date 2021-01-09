@@ -72,9 +72,9 @@ void Game::createWorld(int size)
     objects.push_back(new GameObject(ASTEROID, world, asteroid2Points, asteroid2PointsCount, b2Vec2(-25, -25), 0, b2Vec2(-10, 10), 0, 10));
     objects.push_back(new GameObject(ASTEROID, world, asteroid3Points, asteroid3PointsCount, b2Vec2(-25, 0), 0, b2Vec2(-10, -10), 0, 10));
 
-//    objects.push_back(new GameObject(ASTEROID, world, asteroid1Points, asteroid1PointsCount, b2Vec2(0, 25), 0, b2Vec2(10, 10), 0, 10));
-//    objects.push_back(new GameObject(ASTEROID, world, asteroid2Points, asteroid2PointsCount, b2Vec2(-25, 0), 0, b2Vec2(-10, 10), 0, 10));
-//    objects.push_back(new GameObject(ASTEROID, world, asteroid3Points, asteroid3PointsCount, b2Vec2(-25, 5), 0, b2Vec2(-10, -10), 0, 10));
+    //    objects.push_back(new GameObject(ASTEROID, world, asteroid1Points, asteroid1PointsCount, b2Vec2(0, 25), 0, b2Vec2(10, 10), 0, 10));
+    //    objects.push_back(new GameObject(ASTEROID, world, asteroid2Points, asteroid2PointsCount, b2Vec2(-25, 0), 0, b2Vec2(-10, 10), 0, 10));
+    //    objects.push_back(new GameObject(ASTEROID, world, asteroid3Points, asteroid3PointsCount, b2Vec2(-25, 5), 0, b2Vec2(-10, -10), 0, 10));
 
     world->SetContactListener(this);
 }
@@ -82,16 +82,19 @@ void Game::createWorld(int size)
 void Game::stepWorld(float elapsedTime)
 {
     // update the player's ship based on the controls
-    if (controls->is_thrusting()) {
+    if (controls->is_thrusting())
+    {
         ship->thrust(100 * elapsedTime);
     }
     ship->setAngle(controls->get_direction());
-    if (firing_cooldown > 0) {
+    if (firing_cooldown > 0)
+    {
         firing_cooldown -= elapsedTime;
     }
-    if (controls->is_firing() && firing_cooldown <= 0 && bullets.size() < MAX_BULLETS_INFLIGHT) {
+    if (controls->is_firing() && firing_cooldown <= 0 && bullets.size() < MAX_BULLETS_INFLIGHT)
+    {
         // create a new bullet and add it to the game
-        GameObject *bullet = new GameObject(BULLET, world, shipPoints, shipPointsCount, ship->getPosition(), M_PI + ship->getAngle(), ship->getLinearVelocity() - 40 * b2Vec2(cos(M_PI_2 + ship->getAngle()), sin(M_PI_2 + ship->getAngle())), 0, 1.5);
+        GameObject *bullet = new GameObject(BULLET, world, shipPoints, shipPointsCount, ship->getPosition(), M_PI + ship->getAngle(), -80 * b2Vec2(cos(M_PI_2 + ship->getAngle()), sin(M_PI_2 + ship->getAngle())), 0, 1.5);
 
         objects.push_back(bullet);
         bullets.push_back(bullet);

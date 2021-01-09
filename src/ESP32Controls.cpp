@@ -8,7 +8,7 @@ ESP32Controls::ESP32Controls(RotaryEncoder *rotary_encoder) : rotary_encoder(rot
 
 bool ESP32Controls::is_firing()
 {
-  return false;
+  return rotary_encoder->get_button_pushed();
 }
 
 bool ESP32Controls::is_thrusting()

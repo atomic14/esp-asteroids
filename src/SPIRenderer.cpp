@@ -11,12 +11,33 @@
 #define PIN_NUM_CLK 19
 #define PIN_NUM_CS 22
 
+void IRAM_ATTR draw_task(void *param)
+{
+  Renderer *renderer = static_cast<Renderer *>(param);
+
+  const TickType_t xMaxBlockTime = pdMS_TO_TICKS(100);
+  while (true)
+  {
+    uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
+    if (ulNotificationValue > 0)
+    {
+      renderer->draw();
+    }
+  }
+}
+
 void IRAM_ATTR spi_post_callback(spi_transaction_t *t)
 {
   SPIRenderer *renderer = static_cast<SPIRenderer *>(t->user);
-  renderer->ldac_calls++;
+  renderer->output_calls++;
   gpio_set_level(PIN_NUM_LDAC, 0);
   gpio_set_level(PIN_NUM_LDAC, 1);
+}
+
+void SPIRenderer::trigger_draw()
+{
+  // trigger the task to send the sample
+  xTaskNotifyFromISR(this->spi_task_handle, 1, eIncrement, NULL);
 }
 
 void SPIRenderer::start()
@@ -44,6 +65,9 @@ void SPIRenderer::start()
   ret = spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
   assert(ret == ESP_OK);
 
+  // setup the task for sending samples
+  xTaskCreatePinnedToCore(draw_task, "Draw Task", 1024, this, 10, &spi_task_handle, 1);
+
   Renderer::start();
 }
 
@@ -54,7 +78,7 @@ void SPIRenderer::stop()
   spi_bus_free(HSPI_HOST);
 }
 
-void IRAM_ATTR SPIRenderer::draw(const DrawInstruction_t &instruction)
+void IRAM_ATTR SPIRenderer::draw_sample(const DrawInstruction_t &instruction)
 {
   esp_err_t ret;
   spi_transaction_t t;
@@ -70,10 +94,10 @@ void IRAM_ATTR SPIRenderer::draw(const DrawInstruction_t &instruction)
   assert(ret == ESP_OK);              //Should have had no issues.
   if (ret == ESP_OK)
   {
-    sample_send_success++;
+    send_success++;
   }
   else
   {
-    sample_send_fail++;
+    send_fail++;
   }
 }

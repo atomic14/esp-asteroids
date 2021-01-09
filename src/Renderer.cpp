@@ -10,38 +10,23 @@ void IRAM_ATTR draw_timer(void *para)
 {
   timer_spinlock_take(TIMER_GROUP_0);
   Renderer *renderer = static_cast<Renderer *>(para);
-  renderer->renders++;
+  renderer->requested_sends++;
   // Clear the interrupt
   timer_group_clr_intr_status_in_isr(TIMER_GROUP_0, TIMER_0);
   // After the alarm has been triggered we need enable it again, so it is triggered the next time
   timer_group_enable_alarm_in_isr(TIMER_GROUP_0, TIMER_0);
   // tell the drawing task to do something
-  xTaskNotifyFromISR(renderer->draw_task_handle, 1, eIncrement, NULL);
+  renderer->trigger_draw();
   timer_spinlock_give(TIMER_GROUP_0);
 }
 
-void IRAM_ATTR draw_task(void *param)
-{
-  Renderer *renderer = static_cast<Renderer *>(param);
-
-  const TickType_t xMaxBlockTime = pdMS_TO_TICKS(100);
-  while (true)
-  {
-    uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
-    if (ulNotificationValue > 0)
-    {
-      renderer->_draw();
-    }
-  }
-}
-
-void IRAM_ATTR Renderer::_draw()
+void IRAM_ATTR Renderer::draw()
 {
   // do we still have things to draw?
   if (draw_position < render_buffer->display_frame->size())
   {
     // draw the next sample
-    draw((*render_buffer->display_frame)[draw_position]);
+    draw_sample((*render_buffer->display_frame)[draw_position]);
     draw_position++;
   }
   else
@@ -55,10 +40,10 @@ void IRAM_ATTR Renderer::_draw()
 Renderer::Renderer(RenderBuffer *render_buffer) : render_buffer(render_buffer)
 {
   // stats
-  renders = 0;
-  sample_send_success = 0;
-  ldac_calls = 0;
-  sample_send_fail = 0;
+  requested_sends = 0;
+  send_success = 0;
+  output_calls = 0;
+  send_fail = 0;
   // current drawing position
   draw_position = 0;
 }
@@ -69,9 +54,6 @@ void Renderer::start()
   gpio_set_direction(PIN_NUM_LDAC, GPIO_MODE_OUTPUT);
   // setup the laser output
   gpio_set_direction(PIN_NUM_LASER, GPIO_MODE_OUTPUT);
-
-  // setup the task for sending samples
-  xTaskCreatePinnedToCore(draw_task, "Draw Task", 1024, this, 10, &draw_task_handle, 1);
 
   // set up the renderer timer
   timer_config_t config = {
