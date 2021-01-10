@@ -40,6 +40,16 @@ void SPIRenderer::trigger_draw()
   xTaskNotifyFromISR(this->spi_task_handle, 1, eIncrement, NULL);
 }
 
+SPIRenderer::SPIRenderer(float world_size)
+{
+  render_buffer = new RenderBuffer(
+      0, 4096,
+      0, 4096,
+      2048,
+      2048,
+      2048.0f / world_size);
+}
+
 void SPIRenderer::start()
 {
   // setup SPI output

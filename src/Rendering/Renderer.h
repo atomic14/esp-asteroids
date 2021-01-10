@@ -4,8 +4,6 @@
 #include <vector>
 #include "RenderBuffer.hpp"
 
-typedef void *TaskHandle_t;
-
 #define PIN_NUM_LDAC GPIO_NUM_4
 #define PIN_NUM_LASER GPIO_NUM_2
 
@@ -13,7 +11,7 @@ class Game;
 
 class Renderer
 {
-private:
+protected:
   int draw_position;
   RenderBuffer *render_buffer;
 
@@ -23,10 +21,12 @@ public:
   int output_calls = 0;
   int send_fail = 0;
 
-  Renderer(RenderBuffer *render_buffer);
+  Renderer();
 
   virtual void start();
   virtual void stop();
+
+  RenderBuffer *get_render_buffer() { return render_buffer; }
 
   // override this in derived classes with logic to tigger the draw method
   // For example

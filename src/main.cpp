@@ -3,18 +3,19 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "WiFi.h"
-#include "Rendering/RenderBuffer.hpp"
-#include "Rendering/SPIRenderer.h"
+// #include "Rendering/SPIRenderer.h"
 #include "Rendering/DACRenderer.h"
+// #include "Rendering/HeltecOLEDRenderer.hpp"
 #include "Game/GameLoop.h"
 #include "Game/Game.hpp"
 #include "Controls/RotaryEncoder.hpp"
+#include "Controls/Button.hpp"
 #include "Controls/ESP32Controls.hpp"
 
 #define WORLD_SIZE 30
-#define ROTARY_ENCODER_CLK GPIO_NUM_18
-#define ROTARY_ENCODER_DI GPIO_NUM_5
-#define ROTARY_ENCODER_BUTTON GPIO_NUM_19
+#define ROTARY_ENCODER_CLK GPIO_NUM_14
+#define ROTARY_ENCODER_DI GPIO_NUM_27
+#define ROTARY_ENCODER_BUTTON GPIO_NUM_25
 
 extern "C"
 {
@@ -29,31 +30,25 @@ void app_main()
   uint32_t free_ram = esp_get_free_heap_size();
   printf("Free ram before setup %d\n", free_ram);
 
-  // suitable values for the DAC Renderer
-  RenderBuffer *render_buffer = new RenderBuffer(
-      0, 255,
-      0, 255,
-      128,
-      128,
-      128 / WORLD_SIZE);
-
   // free_ram = esp_get_free_heap_size();
   printf("Creating controls\n");
-  RotaryEncoder *rotary_encoder = new RotaryEncoder(ROTARY_ENCODER_CLK, ROTARY_ENCODER_DI, ROTARY_ENCODER_BUTTON);
-  ESP32Controls *controls = new ESP32Controls(rotary_encoder);
+  RotaryEncoder *rotary_encoder = new RotaryEncoder(ROTARY_ENCODER_CLK, ROTARY_ENCODER_DI);
+  Button *fire_button = new Button(ROTARY_ENCODER_BUTTON);
+  ESP32Controls *controls = new ESP32Controls(rotary_encoder, fire_button);
   printf("Starting world\n");
   Game *game = new Game(controls);
   game->createWorld(WORLD_SIZE);
 
-  GameLoop *game_loop = new GameLoop(game, render_buffer);
+  printf("Starting renderer\n");
+  Renderer *renderer = new DACRenderer(WORLD_SIZE);
+  // Renderer *renderer = new HeltecOLEDRenderer(WORLD_SIZE);
+  renderer->start();
+
+  GameLoop *game_loop = new GameLoop(game, renderer->get_render_buffer());
   game_loop->start();
 
   free_ram = esp_get_free_heap_size();
   printf("Free ram after world %d\n", free_ram);
-
-  printf("Starting renderer\n");
-  Renderer *renderer = new DACRenderer(render_buffer);
-  renderer->start();
 
   free_ram = esp_get_free_heap_size();
   printf("Free ram after renderer %d\n", free_ram);

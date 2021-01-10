@@ -9,9 +9,7 @@ class DACRenderer : public Renderer
 {
 
 public:
-  DACRenderer(RenderBuffer *render_buffer) : Renderer(render_buffer)
-  {
-  }
+  DACRenderer(float world_size);
   void start();
   void stop();
 

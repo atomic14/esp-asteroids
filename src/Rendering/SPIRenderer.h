@@ -14,9 +14,7 @@ private:
   spi_device_handle_t spi;
 
 public:
-  SPIRenderer(RenderBuffer *render_buffer) : Renderer(render_buffer)
-  {
-  }
+  SPIRenderer(float world_size);
   void start();
   void stop();
   void IRAM_ATTR trigger_draw();

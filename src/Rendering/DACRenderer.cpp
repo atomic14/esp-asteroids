@@ -20,6 +20,16 @@ void DACRenderer::stop()
   dac_output_disable(DAC_CHANNEL_2);
 }
 
+DACRenderer::DACRenderer(float world_size)
+{
+  render_buffer = new RenderBuffer(
+      0, 255,
+      0, 255,
+      128,
+      128,
+      128.0f / world_size);
+}
+
 void IRAM_ATTR DACRenderer::trigger_draw()
 {
   // no need to do anything special just draw straight away

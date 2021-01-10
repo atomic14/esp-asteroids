@@ -37,7 +37,7 @@ void IRAM_ATTR Renderer::draw()
   }
 }
 
-Renderer::Renderer(RenderBuffer *render_buffer) : render_buffer(render_buffer)
+Renderer::Renderer() : render_buffer(NULL)
 {
   // stats
   requested_sends = 0;
