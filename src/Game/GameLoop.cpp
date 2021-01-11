@@ -30,10 +30,6 @@ void game_task(void *param)
       game_loop->game->stepWorld(1.0 / 60.0);
       game_loop->render_buffer->render_if_needed(game_loop->game);
       game_loop->steps++;
-      if (game_loop->steps % 60 == 1)
-      {
-        printf("In game loop direction %.2f\n", 180.0f * game_loop->game->controls->get_direction() / 180.0f);
-      }
     }
   }
 }

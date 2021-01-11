@@ -3,9 +3,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "WiFi.h"
-// #include "Rendering/SPIRenderer.h"
+#include "Rendering/I2CRenderer.h"
+#include "Rendering/SPIRenderer.h"
 #include "Rendering/DACRenderer.h"
-// #include "Rendering/HeltecOLEDRenderer.hpp"
+#include "Rendering/HeltecOLEDRenderer.hpp"
 #include "Game/GameLoop.h"
 #include "Game/Game.hpp"
 #include "Controls/RotaryEncoder.hpp"
@@ -40,8 +41,10 @@ void app_main()
   game->createWorld(WORLD_SIZE);
 
   printf("Starting renderer\n");
-  Renderer *renderer = new DACRenderer(WORLD_SIZE);
+  // Renderer *renderer = new DACRenderer(WORLD_SIZE);
   // Renderer *renderer = new HeltecOLEDRenderer(WORLD_SIZE);
+  Renderer *renderer = new SPIRenderer(WORLD_SIZE);
+  // Renderer *renderer = new I2CRenderer(WORLD_SIZE);
   renderer->start();
 
   GameLoop *game_loop = new GameLoop(game, renderer->get_render_buffer());
@@ -53,19 +56,17 @@ void app_main()
   free_ram = esp_get_free_heap_size();
   printf("Free ram after renderer %d\n", free_ram);
 
+  int64_t start = esp_timer_get_time();
   for (int32_t i = 0; i < 60; ++i)
   {
-    int64_t start = esp_timer_get_time();
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    printf("%d, World steps %d, Requested samples %d, Sent samples %d, Output toggles %d, Send failed %d\n", i, game_loop->steps, renderer->requested_sends, renderer->send_success, renderer->output_calls, renderer->send_fail);
     int64_t end = esp_timer_get_time();
-    printf("Elapsed time = %lld\n", end - start);
-    free_ram = esp_get_free_heap_size();
-    printf("Free ram %d\n", free_ram);
-    printf("Direction %d, %.1f\n", rotary_encoder->get_count(), 180.0f * controls->get_direction() / M_PI);
+    printf("%d, World steps %d, FPS %lld, Free RAM %d\n",
+           i,
+           game_loop->steps,
+           1000 * 1000 * renderer->rendered_frames / (end - start),
+           esp_get_free_heap_size());
   }
-  renderer->stop();
-  printf("Stopped renderer timer - reboot in 5 seconds\n");
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   esp_restart();
 }

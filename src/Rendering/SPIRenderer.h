@@ -1,6 +1,7 @@
 #ifndef _spi_renderer_h_
 #define _spi_renderer_h_
 
+#include <esp_attr.h>
 #include "Renderer.h"
 
 class RenderBuffer;
@@ -12,14 +13,12 @@ class SPIRenderer : public Renderer
 private:
   TaskHandle_t spi_task_handle;
   spi_device_handle_t spi;
+  void IRAM_ATTR draw();
 
 public:
   SPIRenderer(float world_size);
   void start();
-  void stop();
-  void IRAM_ATTR trigger_draw();
-  void draw_sample(const DrawInstruction_t &instruction);
-  friend void draw_task(void *param);
+  friend void spi_draw_task(void *param);
 };
 
 #endif

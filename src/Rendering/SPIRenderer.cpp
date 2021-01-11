@@ -2,7 +2,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "SPIRenderer.h"
-#include "driver/timer.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 
@@ -11,33 +10,43 @@
 #define PIN_NUM_CLK 19
 #define PIN_NUM_CS 22
 
-void IRAM_ATTR draw_task(void *param)
+void IRAM_ATTR spi_draw_task(void *param)
 {
-  Renderer *renderer = static_cast<Renderer *>(param);
+  SPIRenderer *renderer = static_cast<SPIRenderer *>(param);
+  renderer->draw();
+}
 
-  const TickType_t xMaxBlockTime = pdMS_TO_TICKS(100);
+void IRAM_ATTR SPIRenderer::draw()
+{
   while (true)
   {
-    uint32_t ulNotificationValue = ulTaskNotifyTake(pdTRUE, xMaxBlockTime);
-    if (ulNotificationValue > 0)
+    for (const auto &instruction : (*render_buffer->display_frame))
     {
-      renderer->draw();
+      set_laser(instruction.laser);
+      // channel A
+      spi_transaction_t t1;
+      memset(&t1, 0, sizeof(t1)); //Zero out the transaction
+      t1.length = 16;
+      t1.flags = SPI_TRANS_USE_TXDATA;
+      t1.tx_data[0] = 0b0010000 || ((instruction.x >> 4) & 15);
+      t1.tx_data[1] = instruction.x;
+      spi_device_transmit(spi, &t1);
+      // channel B
+      spi_transaction_t t2;
+      memset(&t2, 0, sizeof(t2)); //Zero out the transaction
+      t2.length = 16;
+      t2.flags = SPI_TRANS_USE_TXDATA;
+      t2.tx_data[0] = 0b1010000 || ((instruction.y >> 4) & 15);
+      t2.tx_data[1] = instruction.y;
+      spi_device_transmit(spi, &t2); //Transmit!
+      // load the DAC
+      gpio_set_level(PIN_NUM_LDAC, 0);
+      gpio_set_level(PIN_NUM_LDAC, 1);
     }
+    // trigger a re-render
+    render_buffer->swapBuffers();
+    rendered_frames++;
   }
-}
-
-void IRAM_ATTR spi_post_callback(spi_transaction_t *t)
-{
-  SPIRenderer *renderer = static_cast<SPIRenderer *>(t->user);
-  renderer->output_calls++;
-  gpio_set_level(PIN_NUM_LDAC, 0);
-  gpio_set_level(PIN_NUM_LDAC, 1);
-}
-
-void SPIRenderer::trigger_draw()
-{
-  // trigger the task to send the sample
-  xTaskNotifyFromISR(this->spi_task_handle, 1, eIncrement, NULL);
 }
 
 SPIRenderer::SPIRenderer(float world_size)
@@ -52,6 +61,9 @@ SPIRenderer::SPIRenderer(float world_size)
 
 void SPIRenderer::start()
 {
+  // setup the LDAC output
+  gpio_set_direction(PIN_NUM_LDAC, GPIO_MODE_OUTPUT);
+
   // setup SPI output
   esp_err_t ret;
   spi_bus_config_t buscfg = {
@@ -62,52 +74,25 @@ void SPIRenderer::start()
       .quadhd_io_num = -1,
       .max_transfer_sz = 0};
   spi_device_interface_config_t devcfg = {
-      .mode = 0,                          //SPI mode 0
-      .clock_speed_hz = 10 * 1000 * 1000, //Clock out at 10 MHz
-      .spics_io_num = PIN_NUM_CS,         //CS pin
-      .queue_size = 2,                    //We want to be able to queue 2 transactions at a time
-      .post_cb = spi_post_callback        // We'll use this for the LDAC line
+      .command_bits = 0,            ///< Default amount of bits in command phase (0-16), used when ``SPI_TRANS_VARIABLE_CMD`` is not used, otherwise ignored.
+      .address_bits = 0,            ///< Default amount of bits in address phase (0-64), used when ``SPI_TRANS_VARIABLE_ADDR`` is not used, otherwise ignored.
+      .dummy_bits = 0,              ///< Amount of dummy bits to insert between address and data phase
+      .mode = 0,                    //SPI mode 0
+      .clock_speed_hz = 32 * 40000, //Clock out at approx 32 bits * 20KHz - TODO - investigate what clock speed we should use...
+      .spics_io_num = PIN_NUM_CS,   //CS pin
+      .flags = SPI_DEVICE_NO_DUMMY,
+      .queue_size = 2, //We want to be able to queue 2 transactions at a time
+                       // .post_cb = spi_post_callback // We'll use this for the LDAC line
   };
   //Initialize the SPI bus
-  ret = spi_bus_initialize(HSPI_HOST, &buscfg, 1);
+  ret = spi_bus_initialize(HSPI_HOST, &buscfg, 0);
   assert(ret == ESP_OK);
   //Attach the SPI device
   ret = spi_bus_add_device(HSPI_HOST, &devcfg, &spi);
   assert(ret == ESP_OK);
 
   // setup the task for sending samples
-  xTaskCreatePinnedToCore(draw_task, "Draw Task", 1024, this, 10, &spi_task_handle, 1);
+  xTaskCreatePinnedToCore(spi_draw_task, "Draw Task", 4096, this, 10, &spi_task_handle, 1);
 
   Renderer::start();
-}
-
-void SPIRenderer::stop()
-{
-  Renderer::stop();
-  spi_bus_remove_device(spi);
-  spi_bus_free(HSPI_HOST);
-}
-
-void IRAM_ATTR SPIRenderer::draw_sample(const DrawInstruction_t &instruction)
-{
-  esp_err_t ret;
-  spi_transaction_t t;
-  memset(&t, 0, sizeof(t)); //Zero out the transaction
-  t.length = 32;
-  t.flags = SPI_TRANS_USE_TXDATA;
-  t.tx_data[0] = 1;
-  t.tx_data[0] = 2;
-  t.tx_data[0] = 3;
-  t.tx_data[0] = 4;
-  t.user = (void *)this;
-  ret = spi_device_transmit(spi, &t); //Transmit!
-  assert(ret == ESP_OK);              //Should have had no issues.
-  if (ret == ESP_OK)
-  {
-    send_success++;
-  }
-  else
-  {
-    send_fail++;
-  }
 }

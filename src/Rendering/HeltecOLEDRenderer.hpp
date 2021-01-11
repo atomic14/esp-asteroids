@@ -13,10 +13,6 @@ private:
 public:
   HeltecOLEDRenderer(float world_size);
   void start();
-  void stop();
-
-  void trigger_draw(){};
-  void draw_sample(const DrawInstruction_t &instruction);
   friend void oled_draw_task(void *param);
 };
 

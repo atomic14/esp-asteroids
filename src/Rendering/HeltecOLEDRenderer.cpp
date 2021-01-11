@@ -139,6 +139,7 @@ void IRAM_ATTR oled_draw_task(void *param)
     u8g2_SendBuffer(&u8g2);
     // trigger a re-render
     renderer->render_buffer->swapBuffers();
+    renderer->rendered_frames++;
   }
 }
 
@@ -169,12 +170,4 @@ void HeltecOLEDRenderer::start()
   u8g2_SendBuffer(&u8g2);
 
   xTaskCreate(oled_draw_task, "OLED Draw Task", 4096, this, 0, &_draw_task_handle);
-}
-
-void HeltecOLEDRenderer::stop()
-{
-}
-
-void HeltecOLEDRenderer::draw_sample(const DrawInstruction_t &instruction)
-{
 }

@@ -7,14 +7,14 @@ class RenderBuffer;
 
 class DACRenderer : public Renderer
 {
+private:
+  int draw_position;
+  void IRAM_ATTR draw();
 
 public:
   DACRenderer(float world_size);
   void start();
-  void stop();
-
-  void IRAM_ATTR trigger_draw();
-  void IRAM_ATTR draw_sample(const DrawInstruction_t &instruction);
+  friend void draw_timer(void *para);
 };
 
 #endif
