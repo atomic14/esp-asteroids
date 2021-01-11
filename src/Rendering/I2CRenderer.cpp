@@ -55,6 +55,7 @@ void IRAM_ATTR I2CRenderer::draw()
         i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000 / portTICK_RATE_MS);
         i2c_cmd_link_delete(cmd);
       }
+      transactions += 1;
     }
     // trigger a re-render
     render_buffer->swapBuffers();

@@ -23,6 +23,7 @@ public:
   RenderBuffer *get_render_buffer() { return render_buffer; }
 
   int rendered_frames;
+  int transactions;
 };
 
 #endif

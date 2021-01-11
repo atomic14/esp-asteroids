@@ -27,6 +27,7 @@ void IRAM_ATTR DACRenderer::draw()
     dac_output_voltage(DAC_CHANNEL_1, output_x);
     dac_output_voltage(DAC_CHANNEL_2, output_y);
     draw_position++;
+    transactions++;
   }
   else
   {

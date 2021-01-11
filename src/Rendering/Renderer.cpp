@@ -4,6 +4,7 @@
 Renderer::Renderer() : render_buffer(NULL)
 {
   rendered_frames = 0;
+  transactions = 0;
 }
 
 void Renderer::start()

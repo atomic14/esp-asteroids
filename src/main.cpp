@@ -41,9 +41,9 @@ void app_main()
   game->createWorld(WORLD_SIZE);
 
   printf("Starting renderer\n");
-  // Renderer *renderer = new DACRenderer(WORLD_SIZE);
+  Renderer *renderer = new DACRenderer(WORLD_SIZE);
   // Renderer *renderer = new HeltecOLEDRenderer(WORLD_SIZE);
-  Renderer *renderer = new SPIRenderer(WORLD_SIZE);
+  // Renderer *renderer = new SPIRenderer(WORLD_SIZE);
   // Renderer *renderer = new I2CRenderer(WORLD_SIZE);
   renderer->start();
 
@@ -61,10 +61,11 @@ void app_main()
   {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     int64_t end = esp_timer_get_time();
-    printf("%d, World steps %d, FPS %lld, Free RAM %d\n",
+    printf("%d, World steps %d, FPS %lld, Transactions %d, Free RAM %d\n",
            i,
            game_loop->steps,
-           1000 * 1000 * renderer->rendered_frames / (end - start),
+           1000 * 1000 * int16_t(renderer->rendered_frames) / (end - start),
+           renderer->transactions,
            esp_get_free_heap_size());
   }
   vTaskDelay(5000 / portTICK_PERIOD_MS);
