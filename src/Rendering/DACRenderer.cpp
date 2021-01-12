@@ -2,6 +2,8 @@
 #include "driver/timer.h"
 #include "DACRenderer.h"
 #include "driver/dac.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 void IRAM_ATTR draw_timer(void *para)
 {
@@ -39,12 +41,8 @@ void IRAM_ATTR DACRenderer::draw()
   timer_spinlock_give(TIMER_GROUP_0);
 }
 
-void DACRenderer::start()
+void IRAM_ATTR timer_setup(void *param)
 {
-  draw_position = 0;
-  // enable the DAC channels for X and Y
-  dac_output_enable(DAC_CHANNEL_1);
-  dac_output_enable(DAC_CHANNEL_2);
   // set up the renderer timer
   timer_config_t config = {
       .alarm_en = TIMER_ALARM_EN,
@@ -63,9 +61,25 @@ void DACRenderer::start()
   timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 0x00000001ULL);
   timer_enable_intr(TIMER_GROUP_0, TIMER_0);
   timer_isr_register(TIMER_GROUP_0, TIMER_0, draw_timer,
-                     (void *)this, ESP_INTR_FLAG_IRAM, NULL);
+                     param, ESP_INTR_FLAG_IRAM, NULL);
 
   timer_start(TIMER_GROUP_0, TIMER_0);
+  while (true)
+  {
+    vTaskDelay(10000000);
+  }
+}
+
+void DACRenderer::start()
+{
+  draw_position = 0;
+  // enable the DAC channels for X and Y
+  dac_output_enable(DAC_CHANNEL_1);
+  dac_output_enable(DAC_CHANNEL_2);
+
+  // make sure to start the task on CPU 1
+  TaskHandle_t timer_setup_handle;
+  xTaskCreatePinnedToCore(timer_setup, "Draw Task", 4096, this, 0, &timer_setup_handle, 1);
 }
 
 DACRenderer::DACRenderer(float world_size)

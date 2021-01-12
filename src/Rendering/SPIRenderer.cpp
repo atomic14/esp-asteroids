@@ -30,7 +30,7 @@ void IRAM_ATTR SPIRenderer::draw()
       t1.flags = SPI_TRANS_USE_TXDATA;
       t1.tx_data[0] = 0b0010000 || ((instruction.x >> 4) & 15);
       t1.tx_data[1] = instruction.x;
-      spi_device_transmit(spi, &t1);
+      spi_device_polling_transmit(spi, &t1);
       // channel B
       spi_transaction_t t2;
       memset(&t2, 0, sizeof(t2)); //Zero out the transaction
@@ -38,13 +38,14 @@ void IRAM_ATTR SPIRenderer::draw()
       t2.flags = SPI_TRANS_USE_TXDATA;
       t2.tx_data[0] = 0b1010000 || ((instruction.y >> 4) & 15);
       t2.tx_data[1] = instruction.y;
-      spi_device_transmit(spi, &t2);
+      spi_device_polling_transmit(spi, &t2);
 
       transactions += 1;
       // load the DAC
       gpio_set_level(PIN_NUM_LDAC, 0);
       gpio_set_level(PIN_NUM_LDAC, 1);
     }
+    // vTaskDelay(1);
     // trigger a re-render
     render_buffer->swapBuffers();
     rendered_frames++;
@@ -80,7 +81,7 @@ void SPIRenderer::start()
       .address_bits = 0,          ///< Default amount of bits in address phase (0-64), used when ``SPI_TRANS_VARIABLE_ADDR`` is not used, otherwise ignored.
       .dummy_bits = 0,            ///< Amount of dummy bits to insert between address and data phase
       .mode = 0,                  //SPI mode 0
-      .clock_speed_hz = 40000000, //Clock out at approx 32 bits * 20KHz - TODO - investigate what clock speed we should use...
+      .clock_speed_hz = 3600000,  //Clock out at approx 32 bits * 20KHz - TODO - investigate what clock speed we should use...
       .spics_io_num = PIN_NUM_CS, //CS pin
       .flags = SPI_DEVICE_NO_DUMMY,
       .queue_size = 2, //We want to be able to queue 2 transactions at a time

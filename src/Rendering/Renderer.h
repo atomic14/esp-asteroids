@@ -22,8 +22,8 @@ public:
   void IRAM_ATTR set_laser(bool on);
   RenderBuffer *get_render_buffer() { return render_buffer; }
 
-  int rendered_frames;
-  int transactions;
+  volatile int rendered_frames;
+  volatile int transactions;
 };
 
 #endif

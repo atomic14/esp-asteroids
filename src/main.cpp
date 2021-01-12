@@ -41,9 +41,9 @@ void app_main()
   game->createWorld(WORLD_SIZE);
 
   printf("Starting renderer\n");
-  Renderer *renderer = new DACRenderer(WORLD_SIZE);
+  // Renderer *renderer = new DACRenderer(WORLD_SIZE);
   // Renderer *renderer = new HeltecOLEDRenderer(WORLD_SIZE);
-  // Renderer *renderer = new SPIRenderer(WORLD_SIZE);
+  Renderer *renderer = new SPIRenderer(WORLD_SIZE);
   // Renderer *renderer = new I2CRenderer(WORLD_SIZE);
   renderer->start();
 

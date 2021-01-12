@@ -134,6 +134,7 @@ void IRAM_ATTR oled_draw_task(void *param)
       {
         u8g2_DrawLine(&u8g2, (*instructions)[i].x, (*instructions)[i].y, (*instructions)[i + 1].x, (*instructions)[i + 1].y);
       }
+      renderer->transactions++;
     }
     vTaskDelay(pdMS_TO_TICKS(33));
     u8g2_SendBuffer(&u8g2);
@@ -169,5 +170,5 @@ void HeltecOLEDRenderer::start()
   u8g2_ClearBuffer(&u8g2);
   u8g2_SendBuffer(&u8g2);
 
-  xTaskCreate(oled_draw_task, "OLED Draw Task", 4096, this, 0, &_draw_task_handle);
+  xTaskCreatePinnedToCore(oled_draw_task, "OLED Draw Task", 4096, this, 10, &_draw_task_handle, 1);
 }
