@@ -14,11 +14,12 @@ private:
   TaskHandle_t spi_task_handle;
   spi_device_handle_t spi;
   void IRAM_ATTR draw();
+  volatile int draw_position;
 
 public:
   SPIRenderer(float world_size);
   void start();
-  friend void spi_draw_task(void *param);
+  friend void spi_draw_timer(void *para);
 };
 
 #endif

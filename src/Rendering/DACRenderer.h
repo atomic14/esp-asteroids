@@ -8,7 +8,7 @@ class RenderBuffer;
 class DACRenderer : public Renderer
 {
 private:
-  int draw_position;
+  volatile int draw_position;
   void IRAM_ATTR draw();
 
 public:
