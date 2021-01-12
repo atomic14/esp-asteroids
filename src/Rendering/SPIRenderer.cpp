@@ -7,9 +7,10 @@
 #include "driver/timer.h"
 
 #define PIN_NUM_MISO -1
-#define PIN_NUM_MOSI 27
-#define PIN_NUM_CLK 26
-#define PIN_NUM_CS 25
+#define PIN_NUM_MOSI 26
+#define PIN_NUM_CLK 25
+#define PIN_NUM_CS 33
+#define PIN_NUM_LDAC GPIO_NUM_27
 
 void IRAM_ATTR spi_draw_timer(void *para)
 {
@@ -35,16 +36,16 @@ void IRAM_ATTR SPIRenderer::draw()
     memset(&t1, 0, sizeof(t1)); //Zero out the transaction
     t1.length = 16;
     t1.flags = SPI_TRANS_USE_TXDATA;
-    t1.tx_data[0] = 0b0010000 || ((instruction.x >> 4) & 15);
-    t1.tx_data[1] = instruction.x;
+    t1.tx_data[0] = 0b11010000 | ((instruction.x >> 8) & 0xF);
+    t1.tx_data[1] = instruction.x & 255;
     spi_device_polling_transmit(spi, &t1);
     // channel B
     spi_transaction_t t2;
     memset(&t2, 0, sizeof(t2)); //Zero out the transaction
     t2.length = 16;
     t2.flags = SPI_TRANS_USE_TXDATA;
-    t2.tx_data[0] = 0b1010000 || ((instruction.y >> 4) & 15);
-    t2.tx_data[1] = instruction.y;
+    t2.tx_data[0] = 0b01010000 | ((instruction.y >> 8) & 0xF);
+    t2.tx_data[1] = instruction.y & 255;
     spi_device_polling_transmit(spi, &t2);
     // load the DAC
     gpio_set_level(PIN_NUM_LDAC, 0);

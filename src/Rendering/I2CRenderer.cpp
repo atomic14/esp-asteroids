@@ -13,8 +13,8 @@
 #define MCP4725_WRITE_DAC_EEPROM 0x60
 #define MCP4725_MASK 0xFF
 
-#define GPIO_SCL 23
-#define GPIO_SDA 22
+#define GPIO_SCL 27
+#define GPIO_SDA 26
 
 void IRAM_ATTR i2c_draw_task(void *param)
 {
@@ -27,7 +27,7 @@ void IRAM_ATTR I2CRenderer::draw()
   while (true)
   {
     uint8_t buffer[3];
-
+    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
     for (const auto &instruction : (*render_buffer->display_frame))
     {
       set_laser(instruction.laser);
@@ -36,27 +36,24 @@ void IRAM_ATTR I2CRenderer::draw()
       buffer[1] = (instruction.x >> 8) | MCP4725_WRITE_FAST;
       buffer[2] = instruction.x & MCP4725_MASK;
       {
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
         i2c_master_start(cmd);
         i2c_master_write(cmd, buffer, 3, false);
         i2c_master_stop(cmd);
         i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000 / portTICK_RATE_MS);
-        i2c_cmd_link_delete(cmd);
       }
       // channel B
       buffer[0] = (MCP4725_ADDR_Y << 1) | I2C_MASTER_WRITE;
       buffer[1] = (instruction.y >> 8) | MCP4725_WRITE_FAST;
       buffer[2] = instruction.y & MCP4725_MASK;
       {
-        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
         i2c_master_start(cmd);
         i2c_master_write(cmd, buffer, 3, false);
         i2c_master_stop(cmd);
         i2c_master_cmd_begin(I2C_NUM_0, cmd, 1000 / portTICK_RATE_MS);
-        i2c_cmd_link_delete(cmd);
       }
       transactions += 1;
     }
+    i2c_cmd_link_delete(cmd);
     // trigger a re-render
     render_buffer->swapBuffers();
     rendered_frames++;
@@ -75,9 +72,6 @@ I2CRenderer::I2CRenderer(float world_size)
 
 void I2CRenderer::start()
 {
-  // setup the LDAC output
-  gpio_set_direction(PIN_NUM_LDAC, GPIO_MODE_OUTPUT);
-
   // setup I2C output
   // setup i2c
   i2c_config_t conf;
