@@ -11,9 +11,6 @@
 #include "../Game/Game.hpp"
 #include <list>
 
-#define MAX_MOVE_LENGTH 2
-#define MAX_LINE_LENGTH 1
-
 RenderBuffer::RenderBuffer(int minX, int maxX, int minY, int maxY, int centerX, int centerY, float scale)
 {
     display_frame = new std::vector<DrawInstruction_t>(500);
@@ -27,33 +24,31 @@ RenderBuffer::RenderBuffer(int minX, int maxX, int minY, int maxY, int centerX, 
     _scale = scale;
 }
 
-void RenderBuffer::renderSegment(bool laser, float maxLineLength, b2Vec2 start, const b2Vec2 &end)
+// https : //easings.net/#easeInOutQuint
+float easeInOutCubic(float x)
+{
+    return x < 0.5 ? 4 * x * x * x : 1 - powf(-2 * x + 2, 3) / 2;
+}
+
+float easeInOutSine(float x)
+{
+    return -(cosf(M_PI * x) - 1.0f) / 2.0f;
+}
+
+float easeInOutQuint(float x)
+{
+    return x < 0.5 ? 16.0f * x * x * x * x * x : 1.0f - powf(-2.0f * x + 2.0f, 5.0f) / 2.0f;
+}
+
+void RenderBuffer::renderSegment(bool laser, b2Vec2 start, const b2Vec2 &end)
 {
     auto vector = end - start;
     auto length = vector.Length();
-    auto invLength = 1.0f / length;
-    auto step = invLength * vector;
-    // start of the segment
-    drawing_frame->push_back({.x = calc_x(start.x),
-                              .y = calc_y(start.y),
+    int16_t hold = (int16_t)(std::min(10.0f, 1.5f * length)); // this is a bit of finger in the air fudge
+    drawing_frame->push_back({.x = calc_x(start.x + vector.x),
+                              .y = calc_y(start.y + vector.y),
+                              .hold = hold,
                               .laser = laser});
-    // move in steps
-    while (length > maxLineLength)
-    {
-        length -= maxLineLength;
-        start += maxLineLength * step;
-        drawing_frame->push_back({.x = calc_x(start.x),
-                                  .y = calc_y(start.y),
-                                  .laser = laser});
-    }
-    // do the remaining line
-    if (length > 0)
-    {
-        start += length * step;
-        drawing_frame->push_back({.x = calc_x(start.x),
-                                  .y = calc_y(start.y),
-                                  .laser = laser});
-    }
 }
 
 GameObject *removeNearest(b2Vec2 search_point, std::list<GameObject *> &objects)
@@ -93,22 +88,23 @@ void RenderBuffer::render_if_needed(Game *game)
             auto c = cos(angle);
             auto s = sin(angle);
             // move to the start of the object
-            renderSegment(false, MAX_MOVE_LENGTH, cur, points[0] + position);
             auto start = b2Vec2(points[0].x * c - points[0].y * s, points[0].x * s + points[0].y * c) + position;
+            renderSegment(false, cur, start);
+
             cur = start;
             for (int i = 0; i < numPoints; i++)
             {
                 // draw each line segment
                 auto p = b2Vec2(points[i].x * c - points[i].y * s, points[i].x * s + points[i].y * c) + position;
-                renderSegment(true, MAX_LINE_LENGTH, cur, p);
+                renderSegment(true, cur, p);
                 cur = p;
             }
             // close the line
-            renderSegment(true, MAX_LINE_LENGTH, cur, start);
+            renderSegment(true, cur, start);
             cur = start;
         }
         // move back to 0,0 ready for the next draw pass
-        renderSegment(false, MAX_MOVE_LENGTH, cur, b2Vec2(0, 0));
+        renderSegment(false, cur, b2Vec2(0, 0));
         // finished rendering
         needs_render = false;
     }

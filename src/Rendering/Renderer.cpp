@@ -5,6 +5,7 @@ Renderer::Renderer() : render_buffer(NULL)
 {
   rendered_frames = 0;
   transactions = 0;
+  delays = 0;
 }
 
 void Renderer::start()

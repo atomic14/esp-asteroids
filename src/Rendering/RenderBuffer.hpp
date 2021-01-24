@@ -13,14 +13,16 @@
 
 typedef struct
 {
-  int16_t x;
-  int16_t y;
-  bool laser;
+    int16_t x;
+    int16_t y;
+    int16_t hold;
+    bool laser;
 } DrawInstruction_t;
 
 class Game;
 
-class RenderBuffer {
+class RenderBuffer
+{
 private:
     int16_t _minX;
     int16_t _maxX;
@@ -29,14 +31,17 @@ private:
     int16_t _centerX;
     int16_t _centerY;
     float _scale;
-    
-    inline int16_t calc_x(float x) {
+
+    inline int16_t calc_x(float x)
+    {
         return int16_t(std::max(std::min(_maxX, int16_t(_centerX + _scale * x)), _minX));
     }
-    inline int16_t calc_y(float y) {
+    inline int16_t calc_y(float y)
+    {
         return int16_t(std::max(std::min(_maxY, int16_t(_centerY + _scale * y)), _minY));
     }
-    void renderSegment(bool laser, float maxLineLength, b2Vec2 start, const b2Vec2 &end);
+    void renderSegment(bool laser, b2Vec2 start, const b2Vec2 &end);
+
 public:
     RenderBuffer(int minX, int maxX, int minY, int maxY, int centerX, int centerY, float scale);
     std::vector<DrawInstruction_t> *display_frame = NULL;

@@ -5,7 +5,7 @@
 #include <vector>
 #include "RenderBuffer.hpp"
 
-#define PIN_NUM_LASER GPIO_NUM_2
+#define PIN_NUM_LASER GPIO_NUM_32
 
 class Game;
 
@@ -23,6 +23,7 @@ public:
 
   volatile int rendered_frames;
   volatile int transactions;
+  volatile int delays;
 };
 
 #endif

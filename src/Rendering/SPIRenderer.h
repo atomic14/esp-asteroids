@@ -15,6 +15,7 @@ private:
   spi_device_handle_t spi;
   void IRAM_ATTR draw();
   volatile int draw_position;
+  volatile int hold;
 
 public:
   SPIRenderer(float world_size);

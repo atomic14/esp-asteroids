@@ -21,18 +21,15 @@ static const b2Vec2 shipPoints[] = {
     b2Vec2(-0.287795662369115, 0.5)};
 static const int shipPointsCount = 3;
 
-static const b2Vec2 asteroid1Points[] = {
-    b2Vec2(0.057291626835217886, -0.4479166903502308),
-    b2Vec2(0.1848958112645577, -0.24479167247990513),
-    b2Vec2(0.4505208489429552, -0.255208337854741),
-    b2Vec2(0.4088541736640834, -0.015624992894930764),
-    b2Vec2(0.5, 0.19010418012323715),
-    b2Vec2(0.22916671403379496, 0.23437501743971545),
-    b2Vec2(0.0546875026913141, 0.4479166903502308),
-    b2Vec2(-0.10156249515563455, 0.27604168927370515),
-    b2Vec2(-0.4999999999999999, 0.12239584657459872),
-    b2Vec2(-0.3124999956938973, -0.1380208325797654),
-    b2Vec2(-0.23697915536314731, -0.38802083602464743)};
+static const b2Vec2 bulletPoints[] = {
+    b2Vec2(-0.05, 0.25),
+    b2Vec2(0.05, 0.25),
+    b2Vec2(0.05, -0.25),
+    b2Vec2(-0.05, -0.25),
+};
+static const int bulletPointsCount = 4;
+
+static const b2Vec2 asteroid1Points[] = {b2Vec2(0.057291626835217886, -0.4479166903502308), b2Vec2(0.1848958112645577, -0.24479167247990513), b2Vec2(0.4505208489429552, -0.255208337854741), b2Vec2(0.4088541736640834, -0.015624992894930764), b2Vec2(0.5, 0.19010418012323715), b2Vec2(0.22916671403379496, 0.23437501743971545), b2Vec2(0.0546875026913141, 0.4479166903502308), b2Vec2(-0.10156249515563455, 0.27604168927370515), b2Vec2(-0.4999999999999999, 0.12239584657459872), b2Vec2(-0.3124999956938973, -0.1380208325797654), b2Vec2(-0.23697915536314731, -0.38802083602464743)};
 static const int asteroid1PointsCount = 11;
 
 static const b2Vec2 asteroid2Points[] = {
@@ -82,10 +79,10 @@ void Game::createWorld(int size)
 void Game::stepWorld(float elapsedTime)
 {
     // update the player's ship based on the controls
-    if (controls->is_thrusting())
-    {
-        ship->thrust(100 * elapsedTime);
-    }
+    // if (controls->is_thrusting())
+    // {
+    //     ship->thrust(100 * elapsedTime);
+    // }
     ship->setAngle(controls->get_direction());
     if (firing_cooldown > 0)
     {
@@ -94,7 +91,7 @@ void Game::stepWorld(float elapsedTime)
     if (controls->is_firing() && firing_cooldown <= 0 && bullets.size() < MAX_BULLETS_INFLIGHT)
     {
         // create a new bullet and add it to the game
-        GameObject *bullet = new GameObject(BULLET, world, shipPoints, shipPointsCount, ship->getPosition(), M_PI + ship->getAngle(), -80 * b2Vec2(cos(M_PI_2 + ship->getAngle()), sin(M_PI_2 + ship->getAngle())), 0, 1.5);
+        GameObject *bullet = new GameObject(BULLET, world, bulletPoints, bulletPointsCount, ship->getPosition(), M_PI + ship->getAngle(), -80 * b2Vec2(cos(M_PI_2 + ship->getAngle()), sin(M_PI_2 + ship->getAngle())), 0, 1.5);
 
         objects.push_back(bullet);
         bullets.push_back(bullet);

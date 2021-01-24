@@ -7,10 +7,10 @@
 #include "driver/timer.h"
 
 #define PIN_NUM_MISO -1
-#define PIN_NUM_MOSI 26
-#define PIN_NUM_CLK 25
-#define PIN_NUM_CS 33
-#define PIN_NUM_LDAC GPIO_NUM_27
+#define PIN_NUM_MOSI 25
+#define PIN_NUM_CLK 26
+#define PIN_NUM_CS 27
+#define PIN_NUM_LDAC GPIO_NUM_33
 
 void IRAM_ATTR spi_draw_timer(void *para)
 {
@@ -26,40 +26,51 @@ void IRAM_ATTR SPIRenderer::draw()
   // After the alarm has been triggered we need enable it again, so it is triggered the next time
   timer_group_enable_alarm_in_isr(TIMER_GROUP_0, TIMER_0);
   // do the actual drawing
-  // do we still have things to draw?
-  if (draw_position < render_buffer->display_frame->size())
+  if (hold > 0)
   {
-    const DrawInstruction_t &instruction = render_buffer->display_frame->at(draw_position);
-    set_laser(instruction.laser);
-    // channel A
-    spi_transaction_t t1;
-    memset(&t1, 0, sizeof(t1)); //Zero out the transaction
-    t1.length = 16;
-    t1.flags = SPI_TRANS_USE_TXDATA;
-    t1.tx_data[0] = 0b11010000 | ((instruction.x >> 8) & 0xF);
-    t1.tx_data[1] = instruction.x & 255;
-    spi_device_polling_transmit(spi, &t1);
-    // channel B
-    spi_transaction_t t2;
-    memset(&t2, 0, sizeof(t2)); //Zero out the transaction
-    t2.length = 16;
-    t2.flags = SPI_TRANS_USE_TXDATA;
-    t2.tx_data[0] = 0b01010000 | ((instruction.y >> 8) & 0xF);
-    t2.tx_data[1] = instruction.y & 255;
-    spi_device_polling_transmit(spi, &t2);
-    // load the DAC
-    gpio_set_level(PIN_NUM_LDAC, 0);
-    gpio_set_level(PIN_NUM_LDAC, 1);
-
-    draw_position++;
-    transactions++;
+    delays++;
+    hold--;
   }
   else
   {
-    // trigger a re-render
-    rendered_frames++;
-    render_buffer->swapBuffers();
-    draw_position = 0;
+    // do we still have things to draw?
+    if (draw_position < render_buffer->display_frame->size())
+    {
+      const DrawInstruction_t &instruction = render_buffer->display_frame->at(draw_position);
+      hold = instruction.hold;
+      // channel A
+      spi_transaction_t t1;
+      memset(&t1, 0, sizeof(t1)); //Zero out the transaction
+      t1.length = 16;
+      t1.flags = SPI_TRANS_USE_TXDATA;
+      t1.tx_data[0] = 0b11010000 | ((instruction.x >> 8) & 0xF);
+      t1.tx_data[1] = instruction.x & 255;
+      spi_device_polling_transmit(spi, &t1);
+      // channel B
+      spi_transaction_t t2;
+      memset(&t2, 0, sizeof(t2)); //Zero out the transaction
+      t2.length = 16;
+      t2.flags = SPI_TRANS_USE_TXDATA;
+      t2.tx_data[0] = 0b01010000 | ((instruction.y >> 8) & 0xF);
+      t2.tx_data[1] = instruction.y & 255;
+      spi_device_polling_transmit(spi, &t2);
+      // set the laser state
+      set_laser(instruction.laser);
+
+      // load the DAC
+      gpio_set_level(PIN_NUM_LDAC, 0);
+      gpio_set_level(PIN_NUM_LDAC, 1);
+
+      draw_position++;
+      transactions++;
+    }
+    else
+    {
+      // trigger a re-render
+      rendered_frames++;
+      render_buffer->swapBuffers();
+      draw_position = 0;
+    }
   }
   timer_spinlock_give(TIMER_GROUP_0);
 }
@@ -67,12 +78,18 @@ void IRAM_ATTR SPIRenderer::draw()
 SPIRenderer::SPIRenderer(float world_size)
 {
   draw_position = 0;
+  hold = 0;
   render_buffer = new RenderBuffer(
-      0, 4096,
-      0, 4096,
+      1024, 3072,
+      1024, 3072,
       2048,
       2048,
-      2048.0f / world_size);
+      1024.0f / world_size);
+  // 0, 4095,
+  // 0, 4095,
+  // 2048,
+  // 2048,
+  // 2048.0f / world_size);
 }
 
 void spi_timer_setup(void *param)
@@ -84,7 +101,7 @@ void spi_timer_setup(void *param)
       .intr_type = TIMER_INTR_LEVEL,
       .counter_dir = TIMER_COUNT_UP,
       .auto_reload = TIMER_AUTORELOAD_EN,
-      .divider = 4000}; // default clock source is APB
+      .divider = 8000}; // default clock source is APB
   timer_init(TIMER_GROUP_0, TIMER_0, &config);
 
   // Timer's counter will initially start from value below.
