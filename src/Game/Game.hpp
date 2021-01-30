@@ -17,6 +17,8 @@ class b2World;
 class GameObject;
 class RenderBuffer;
 class Controls;
+class SoundFX;
+
 class Game : public b2ContactListener
 {
 private:
@@ -28,14 +30,21 @@ private:
     std::set<GameObject *> deadBullets;
     int _size;
     float firing_cooldown;
-
-public:
+    SoundFX *sound_fx;
     Controls *controls;
 
-    Game(Controls *controls) : controls(controls){};
+public:
+    Game(Controls *controls, SoundFX *sound_fx)
+    {
+        this->sound_fx = sound_fx;
+        this->controls = controls;
+    };
     void createWorld(int size);
     void stepWorld(float elapsedTime);
-    std::list<GameObject *> &getObjects() { return objects; }
+    std::list<GameObject *> &getObjects()
+    {
+        return objects;
+    }
 
     void BeginContact(b2Contact *contact);
     void EndContact(b2Contact *contact);

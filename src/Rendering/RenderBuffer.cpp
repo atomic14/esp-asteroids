@@ -5,10 +5,12 @@
 //  Created by Chris Greening on 08/01/2021.
 //
 
+#include <stdint.h>
 #include "RenderBuffer.hpp"
 #include "box2d/box2d.h"
 #include "../Game/GameObject.hpp"
 #include "../Game/Game.hpp"
+
 #include <list>
 
 RenderBuffer::RenderBuffer(int minX, int maxX, int minY, int maxY, int centerX, int centerY, float scale)
@@ -44,7 +46,7 @@ void RenderBuffer::renderSegment(bool laser, b2Vec2 start, const b2Vec2 &end)
 {
     auto vector = end - start;
     auto length = vector.Length();
-    int16_t hold = (int16_t)(std::min(10.0f, 1.5f * length)); // this is a bit of finger in the air fudge
+    int16_t hold = (int16_t)(std::min(10.0f, 1.75f * length)); // this is a bit of finger in the air fudge
     drawing_frame->push_back({.x = calc_x(start.x + vector.x),
                               .y = calc_y(start.y + vector.y),
                               .hold = hold,

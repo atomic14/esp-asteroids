@@ -19,7 +19,7 @@ GameObject::GameObject(GAME_OBJECTS objectType, b2World *world, const b2Vec2 *po
     bodyDef.angle = angle;
     bodyDef.angularVelocity = angularVelocity;
     bodyDef.linearVelocity = linearVelocity;
-    bodyDef.userData.pointer = reinterpret_cast<uintptr_t>(this);
+    bodyDef.userData.pointer = (uintptr_t)this;
     bodyDef.bullet = objectType == BULLET;
     body = world->CreateBody(&bodyDef);
     // set the shape of the body taking into account the scaling
