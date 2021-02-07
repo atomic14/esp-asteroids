@@ -8,138 +8,141 @@
 #include <stdio.h>
 #include "Game.hpp"
 #include "box2d/box2d.h"
-#include "GameObject.hpp"
+#include "DynamicObject.hpp"
+#include "ShipObject.hpp"
 #include "../Controls/Controls.hpp"
 #include "../Audio/SoundFX.h"
+#include "Shapes.hpp"
+#include "GameStateMachine/PlayingState.hpp"
+#include "GameStateMachine/GameOverState.hpp"
+#include "GameStateMachine/StartState.hpp"
 #include <set>
 
-#define MAX_BULLETS_INFLIGHT 5
+#define MAX_BULLETS_INFLIGHT 10
 #define BULLET_MAX_AGE 1
-#define FIRE_COOLDOWN 0.5
 
-static const b2Vec2 shipPoints[] = {
-    b2Vec2(0.2877956623691139, 0.5),
-    b2Vec2(4.728071212635484e-8, -0.49999999999999994),
-    b2Vec2(-0.287795662369115, 0.5)};
-static const int shipPointsCount = 3;
-
-static const b2Vec2 bulletPoints[] = {
-    b2Vec2(-0.025, 0.25),
-    b2Vec2(0.025, 0.25),
-    b2Vec2(0.025, -0.25),
-    b2Vec2(-0.025, -0.25),
-};
-static const int bulletPointsCount = 4;
-
-static const b2Vec2 asteroid1Points[] = {b2Vec2(0.057291626835217886, -0.4479166903502308), b2Vec2(0.1848958112645577, -0.24479167247990513), b2Vec2(0.4505208489429552, -0.255208337854741), b2Vec2(0.4088541736640834, -0.015624992894930764), b2Vec2(0.5, 0.19010418012323715), b2Vec2(0.22916671403379496, 0.23437501743971545), b2Vec2(0.0546875026913141, 0.4479166903502308), b2Vec2(-0.10156249515563455, 0.27604168927370515), b2Vec2(-0.4999999999999999, 0.12239584657459872), b2Vec2(-0.3124999956938973, -0.1380208325797654), b2Vec2(-0.23697915536314731, -0.38802083602464743)};
-static const int asteroid1PointsCount = 11;
-
-static const b2Vec2 asteroid2Points[] = {
-    b2Vec2(-0.35082873126030634, -0.12154699997812933),
-    b2Vec2(-0.0966850749587742, -0.4889503034580926),
-    b2Vec2(0.08839780072522405, -0.33977902010144123),
-    b2Vec2(0.3149171206617623, -0.430939252270621),
-    b2Vec2(0.39226520109252255, -0.1712707476981352),
-    b2Vec2(0.5, -0.011049742219900347),
-    b2Vec2(0.3895027787841655, 0.2403314552308802),
-    b2Vec2(-0.124309385744092, 0.4889503034580926),
-    b2Vec2(-0.5, 0.25138121754909754)};
-static const int asteroid2PointsCount = 9;
-
-static const b2Vec2 asteroid3Points[] = {
-    b2Vec2(-0.0821428593025872, -0.2839285783802025),
-    b2Vec2(0.21428571293588303, -0.40535714683914514),
-    b2Vec2(0.5000000000000001, -0.0875000089763781),
-    b2Vec2(0.2214285476715408, 0.40535714683914514),
-    b2Vec2(-0.3642857148256468, 0.3839285953880768),
-    b2Vec2(-0.5, -0.05892857554555684),
-    b2Vec2(-0.23928572899887535, -0.3660714140607422)};
-static const int asteroid3PointsCount = 7;
-
-void Game::createWorld(int size)
+Game::Game(float size, Controls *controls, SoundFX *sound_fx)
 {
-    _size = size;
+    this->size = size;
+    this->sound_fx = sound_fx;
+    this->controls = controls;
+    this->current_game_state = GAME_STATE_START;
     // no gravity in our world
     b2Vec2 gravity(0.0f, 0.0f);
-    printf("Creating world");
-    world = new b2World(gravity);
-    // create the objects for our game
-    // place the ship at the center of the world
-    printf("Created World\n");
-    ship = new GameObject(SHIP, world, shipPoints, shipPointsCount, b2Vec2(0, 0), 0, b2Vec2(0, 0), 0, 5);
-    printf("Created ship\n");
-    objects.push_back(ship);
-    // place the asteroids
-    objects.push_back(new GameObject(ASTEROID, world, asteroid1Points, asteroid1PointsCount, b2Vec2(25, 25), 0, b2Vec2(10, 10), 0, 10));
-    printf("Created asteroid1\n");
-    objects.push_back(new GameObject(ASTEROID, world, asteroid2Points, asteroid2PointsCount, b2Vec2(-25, -25), 0, b2Vec2(-10, 10), 0, 10));
-    printf("Created asteroid2\n");
-    objects.push_back(new GameObject(ASTEROID, world, asteroid3Points, asteroid3PointsCount, b2Vec2(-25, 0), 0, b2Vec2(-10, -10), 0, 10));
-    printf("Created asteroid3\n");
+    this->world = new b2World(gravity);
+    this->world->SetContactListener(this);
+    this->asteroid_speed = 10.0;
 
-    //    objects.push_back(new GameObject(ASTEROID, world, asteroid1Points, asteroid1PointsCount, b2Vec2(0, 25), 0, b2Vec2(10, 10), 0, 10));
-    //    objects.push_back(new GameObject(ASTEROID, world, asteroid2Points, asteroid2PointsCount, b2Vec2(-25, 0), 0, b2Vec2(-10, 10), 0, 10));
-    //    objects.push_back(new GameObject(ASTEROID, world, asteroid3Points, asteroid3PointsCount, b2Vec2(-25, 5), 0, b2Vec2(-10, -10), 0, 10));
+    game_state_start_handler = new StartState();
+    game_over_state_handler = new GameOverState();
+    game_playing_state_handler = new PlayingState();
 
-    world->SetContactListener(this);
+    current_game_state_handler = game_state_start_handler;
+    this->score = 0;
 }
 
-void Game::stepWorld(float elapsedTime)
+void Game::reset()
 {
-    // update the player's ship based on the controls
-    if (controls->is_thrusting())
+    // clean up any old objects that we might have
+    for (auto object : objects)
     {
-        ship->thrust(100 * elapsedTime);
+        object->destroy();
+        delete object;
     }
-    ship->setAngle(controls->get_direction());
-    if (firing_cooldown > 0)
+    objects.clear();
+    hitAsteroids.clear();
+    bullets.clear();
+    deadBullets.clear();
+}
+
+void Game::add_player_ship()
+{
+    // create the objects for our game
+    ship = new ShipObject(world, shipPoints, shipPointsCount, shipThrustPoints, shipThrustPointsCount, b2Vec2(0, 0), 0, 5, b2Vec2(0, 0), 0);
+    objects.push_back(ship);
+}
+
+void Game::add_lives()
+{
+    // the three lives
+    objects.push_back(new GameObject(HUD, shipPoints, shipPointsCount, b2Vec2(size - 1.5, -size + 1.5), 0, 3));
+    objects.push_back(new GameObject(HUD, shipPoints, shipPointsCount, b2Vec2(size - 4, -size + 1.5), 0, 3));
+    objects.push_back(new GameObject(HUD, shipPoints, shipPointsCount, b2Vec2(size - 6.5, -size + 1.5), 0, 3));
+}
+
+void Game::set_score(int new_score)
+{
+    this->score = new_score;
+}
+
+bool Game::can_add_bullet()
+{
+    return bullets.size() < MAX_BULLETS_INFLIGHT;
+}
+
+bool Game::has_asteroids()
+{
+    // check if there are any asteroids left
+    for (auto obj : objects)
     {
-        firing_cooldown -= elapsedTime;
-    }
-    if (controls->is_firing() && firing_cooldown <= 0 && bullets.size() < MAX_BULLETS_INFLIGHT)
-        if (firing_cooldown <= 0 && bullets.size() < MAX_BULLETS_INFLIGHT)
+        if (obj->getObjectType() == ASTEROID)
         {
-            // create a new bullet and add it to the game
-            GameObject *bullet = new GameObject(BULLET, world, bulletPoints, bulletPointsCount, ship->getPosition(), M_PI + ship->getAngle(), -80 * b2Vec2(cos(M_PI_2 + ship->getAngle()), sin(M_PI_2 + ship->getAngle())), 0, 1.5);
-
-            objects.push_back(bullet);
-            bullets.push_back(bullet);
-            // prevent firing for some time period
-            firing_cooldown = FIRE_COOLDOWN;
-
-            if (sound_fx)
-            {
-                sound_fx->fire();
-            }
+            return true;
         }
-    // step the world forward
-    world->Step(elapsedTime, 6, 2);
-    // wrap objects around the screen
+    }
+    return false;
+}
+
+void Game::add_asteroids()
+{
+    objects.push_back(new DynamicObject(world, ASTEROID, asteroid1Points, asteroid1PointsCount, b2Vec2(25, 25), 0, 10, b2Vec2(asteroid_speed, asteroid_speed), 0));
+    printf("Created asteroid1\n");
+    objects.push_back(new DynamicObject(world, ASTEROID, asteroid2Points, asteroid2PointsCount, b2Vec2(-25, -25), 0, 10, b2Vec2(-asteroid_speed, asteroid_speed), 0));
+    printf("Created asteroid2\n");
+    objects.push_back(new DynamicObject(world, ASTEROID, asteroid3Points, asteroid3PointsCount, b2Vec2(-25, 0), 0, 10, b2Vec2(-asteroid_speed, -asteroid_speed), 0));
+    printf("Created asteroid3\n");
+}
+
+void Game::add_bullet()
+{
+    // create a new bullet and add it to the game
+    DynamicObject *bullet = new DynamicObject(world, BULLET, bulletPoints, bulletPointsCount, ship->getPosition(), M_PI + ship->getAngle(), 1.5, -80 * b2Vec2(cos(M_PI_2 + ship->getAngle()), sin(M_PI_2 + ship->getAngle())), 0);
+
+    objects.push_back(bullet);
+    bullets.push_back(bullet);
+}
+
+void Game::wrap_objects()
+{
     for (auto object : this->objects)
     {
         auto position = object->getPosition();
-        if (position.x < -_size)
+        if (position.x < -size)
         {
-            position.x = _size;
+            position.x = size;
         }
-        else if (position.x > _size)
+        else if (position.x > size)
         {
-            position.x = -_size;
+            position.x = -size;
         }
-        if (position.y < -_size)
+        if (position.y < -size)
         {
-            position.y = _size;
+            position.y = size;
         }
-        else if (position.y > _size)
+        else if (position.y > size)
         {
-            position.y = -_size;
+            position.y = -size;
         }
         object->setPosition(position);
     }
+}
+
+void Game::process_bullets(float elapsed_time)
+{
     // age bullets so that they dissappear
     for (auto bullet : bullets)
     {
-        bullet->increaseAge(elapsedTime);
+        bullet->increaseAge(elapsed_time);
         if (bullet->getAge() > BULLET_MAX_AGE)
         {
             deadBullets.insert(bullet);
@@ -152,70 +155,63 @@ void Game::stepWorld(float elapsedTime)
         bullets.remove(bullet);
         delete bullet;
     }
+    deadBullets.clear();
+}
+
+void Game::process_asteroids()
+{
     // remove any hit asteroids
     for (auto asteroid : hitAsteroids)
     {
         if (asteroid->getAge() < 1)
         {
-            if (sound_fx)
-            {
-                sound_fx->bang_large();
-            }
+            sound_fx->bang_large();
         }
         else if (asteroid->getAge() < 2)
         {
-            if (sound_fx)
-            {
-                sound_fx->bang_medium();
-            }
+            sound_fx->bang_medium();
         }
         else
         {
-            if (sound_fx)
-            {
-                sound_fx->bang_small();
-            }
+            sound_fx->bang_small();
         }
         // add any child asteroids
         if (asteroid->getAge() < 2)
         {
+            auto position = asteroid->getPosition();
+            auto scale = 10.0 / (asteroid->getAge() + 2);
+            auto linearVelocity = asteroid->getLinearVelocity();
             {
-                auto position = asteroid->getPosition();
-                auto scale = 10.0 / (asteroid->getAge() + 2);
-                auto linearVelocity = asteroid->getLinearVelocity();
                 auto angle = atan2(linearVelocity.y, linearVelocity.x) + M_PI_2;
                 // printf("Angle %f %f = %f\n", linearVelocity.y, linearVelocity.x, angle);
-                auto newAsteroid = new GameObject(
-                    ASTEROID,
+                auto newAsteroid = new DynamicObject(
                     world,
+                    ASTEROID,
                     asteroid1Points,
                     asteroid1PointsCount,
                     b2Vec2(position.x + scale * cos(angle),
                            position.y + scale * sin(angle)),
                     0,
-                    b2Vec2(10 * cos(angle), 10 * sin(angle)),
-                    0,
-                    scale);
+                    scale,
+                    b2Vec2(asteroid_speed * cos(angle), 10 * sin(angle)),
+                    0);
                 newAsteroid->setAge(asteroid->getAge() + 1);
                 objects.push_back(newAsteroid);
             }
             {
-                auto position = asteroid->getPosition();
-                auto scale = 10 / (asteroid->getAge() + 2);
-                auto linearVelocity = asteroid->getLinearVelocity();
                 auto angle = atan2(linearVelocity.y, linearVelocity.x) - M_PI_2;
                 // printf("Angle %f %f = %f\n", linearVelocity.y, linearVelocity.x, angle);
-                auto newAsteroid = new GameObject(
-                    ASTEROID,
+                auto newAsteroid = new DynamicObject(
                     world,
+                    ASTEROID,
                     asteroid2Points,
                     asteroid2PointsCount,
                     b2Vec2(position.x + scale * cos(angle),
                            position.y + scale * sin(angle)),
                     0,
+                    scale,
                     b2Vec2(10 * cos(angle), 10 * sin(angle)),
-                    0,
-                    scale);
+                    0);
                 newAsteroid->setAge(asteroid->getAge() + 1);
                 objects.push_back(newAsteroid);
             }
@@ -224,14 +220,52 @@ void Game::stepWorld(float elapsedTime)
         objects.remove(asteroid);
         delete asteroid;
     }
-    deadBullets.clear();
     hitAsteroids.clear();
 }
 
+void Game::stepWorld(float elapsedTime)
+{
+    // step the world forward
+    world->Step(elapsedTime, 6, 2);
+    // wrap objects around the screen
+    wrap_objects();
+    // handle any bullets
+    process_bullets(elapsedTime);
+    // handle any asteroids
+    process_asteroids();
+    // handle the current game state
+    GAME_STATE next_state = current_game_state_handler->handle(this, elapsedTime);
+    // are we transitioning to a new state?
+    if (next_state != current_game_state)
+    {
+        // yes we are so tell the current state to clean up
+        current_game_state_handler->exit(this);
+        // update to the new state handler
+        switch (next_state)
+        {
+        case GAME_STATE_START:
+            current_game_state_handler = game_state_start_handler;
+            break;
+        case GAME_STATE_GAME_OVER:
+            current_game_state_handler = game_over_state_handler;
+            break;
+        case GAME_STATE_PLAYING:
+            current_game_state_handler = game_playing_state_handler;
+            break;
+        }
+        current_game_state = next_state;
+        // tell the new handler to start up
+        current_game_state_handler->enter(this);
+    }
+}
+
+// Processs contact events from the world
+// We're only interested in collisions between asteroids and bullets, and between asteroids and the ship
 void Game::BeginContact(b2Contact *contact)
 {
     GameObject *objA = reinterpret_cast<GameObject *>(contact->GetFixtureA()->GetBody()->GetUserData().pointer);
     GameObject *objB = reinterpret_cast<GameObject *>(contact->GetFixtureB()->GetBody()->GetUserData().pointer);
+    // Asteroid and bullet collisions - need to check both sides as the order is random
     if (objA->getObjectType() == BULLET && objB->getObjectType() == ASTEROID)
     {
         deadBullets.insert(objA);
@@ -242,9 +276,15 @@ void Game::BeginContact(b2Contact *contact)
         deadBullets.insert(objB);
         hitAsteroids.insert(objA);
     }
+    // Asteroid and ship collision
+    if ((objA->getObjectType() == SHIP && objB->getObjectType() == ASTEROID) ||
+        (objA->getObjectType() == ASTEROID && objB->getObjectType() == SHIP))
+    {
+        // TODO
+    }
 }
 
 void Game::EndContact(b2Contact *contact)
 {
-    B2_NOT_USED(contact);
+    // nothing to do here
 }

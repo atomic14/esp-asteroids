@@ -13,17 +13,21 @@ SoundFX::SoundFX(I2SOutput *output) : output(output)
 
 void SoundFX::fire()
 {
-  output->add_wav_file(fire_wav, 0.5);
+  output->add_wav_file(fire_wav, 0.2);
+}
+void SoundFX::thrust()
+{
+  output->add_wav_file(thrust_wav, 0.2);
 }
 void SoundFX::bang_large()
 {
-  output->add_wav_file(bang_large_wav, 4.0);
+  output->add_wav_file(bang_large_wav, 0.5);
 }
 void SoundFX::bang_medium()
 {
-  output->add_wav_file(bang_medium_wav, 2.0);
+  output->add_wav_file(bang_medium_wav, 0.25);
 }
 void SoundFX::bang_small()
 {
-  output->add_wav_file(bang_small_wav, 1.0);
+  output->add_wav_file(bang_small_wav, 0.125);
 }

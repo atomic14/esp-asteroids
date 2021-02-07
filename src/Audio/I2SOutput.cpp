@@ -48,8 +48,8 @@ void i2sWriterTask(void *param)
                             // apply clipping
                             sample = tanhf(sample);
                             // output it
-                            frames[i].left = sample * 16384;
-                            frames[i].right = sample * 16384;
+                            frames[i].left = sample * 16383;
+                            frames[i].right = sample * 16383;
                             // frames[i].left = (i % 100 < 50) ? 1000 : -1000;
                             // frames[i].right = (i % 100 < 50) ? 1000 : -1000;
                         }
@@ -77,9 +77,9 @@ void i2sWriterTask(void *param)
 void I2SOutput::start()
 {
     i2s_pin_config_t i2sPins = {
-        .bck_io_num = GPIO_NUM_19,
-        .ws_io_num = GPIO_NUM_18,
-        .data_out_num = GPIO_NUM_5,
+        .bck_io_num = GPIO_NUM_22,
+        .ws_io_num = GPIO_NUM_23,
+        .data_out_num = GPIO_NUM_21,
         .data_in_num = -1};
     // i2s config for writing both channels of I2S
     i2s_config_t i2sConfig = {

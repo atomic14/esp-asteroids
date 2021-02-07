@@ -9,5 +9,5 @@ Button::Button(gpio_num_t button_pin)
 
 bool Button::get_button_pushed()
 {
-  return gpio_get_level(_button_pin) == 1;
+  return gpio_get_level(_button_pin) == 0;
 }

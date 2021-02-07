@@ -12,7 +12,7 @@ private:
   void IRAM_ATTR draw();
 
 public:
-  DACRenderer(float world_size);
+  DACRenderer(float world_size, HersheyFont *font);
   void start();
   friend void draw_timer(void *para);
 };

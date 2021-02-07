@@ -19,11 +19,13 @@
 #include "Audio/I2SOutput.h"
 #include "Audio/WAVFile.h"
 #include "Audio/SoundFX.h"
+#include "HersheyFonts/HersheyFont.hpp"
 
 #define WORLD_SIZE 30
-#define ROTARY_ENCODER_CLK_GPIO GPIO_NUM_23
-#define ROTARY_ENCODER_DI_GPIO GPIO_NUM_22
-#define FIRE_GPIO GPIO_NUM_21
+#define ROTARY_ENCODER_CLK_GPIO GPIO_NUM_19
+#define ROTARY_ENCODER_DI_GPIO GPIO_NUM_18
+#define FIRE_GPIO GPIO_NUM_4
+#define THRUST_GPIO GPIO_NUM_5
 
 extern "C"
 {
@@ -62,39 +64,43 @@ void app_main()
   }
 
   uint32_t free_ram = esp_get_free_heap_size();
-  printf("Free ram before setup %d\n", free_ram);
+  ESP_LOGI(TAG, "Free ram before setup %d", free_ram);
 
-  printf("Starting audio");
+  ESP_LOGI(TAG, "Starting audio");
   I2SOutput *i2sOutput = new I2SOutput();
   i2sOutput->start();
 
   free_ram = esp_get_free_heap_size();
-  printf("Free ram after I2SOutput %d\n", free_ram);
+  ESP_LOGI(TAG, "Free ram after I2SOutput %d", free_ram);
 
   SoundFX *sound_fx = new SoundFX(i2sOutput);
   free_ram = esp_get_free_heap_size();
-  printf("Free ram after SoundFX %d\n", free_ram);
+  ESP_LOGI(TAG, "Free ram after SoundFX %d", free_ram);
 
-  printf("Creating controls\n");
+  ESP_LOGI(TAG, "Creating controls");
   RotaryEncoder *rotary_encoder = new RotaryEncoder(ROTARY_ENCODER_CLK_GPIO, ROTARY_ENCODER_DI_GPIO);
 
   free_ram = esp_get_free_heap_size();
-  printf("Free ram after RotaryEncoder %d\n", free_ram);
+  ESP_LOGI(TAG, "Free ram after RotaryEncoder %d", free_ram);
 
   Button *fire_button = new Button(FIRE_GPIO);
+  Button *thrust_button = new Button(THRUST_GPIO);
 
   free_ram = esp_get_free_heap_size();
-  printf("Free ram after Button %d\n", free_ram);
+  ESP_LOGI(TAG, "Free ram after Button %d", free_ram);
 
-  ESP32Controls *controls = new ESP32Controls(rotary_encoder, fire_button);
-  printf("Starting world\n");
-  Game *game = new Game(NULL, NULL);
-  game->createWorld(WORLD_SIZE);
+  ESP32Controls *controls = new ESP32Controls(rotary_encoder, fire_button, thrust_button);
+  ESP_LOGI(TAG, "Starting world");
+  Game *game = new Game(WORLD_SIZE, controls, sound_fx);
 
-  printf("Starting renderer\n");
+  ESP_LOGI(TAG, "Loading font");
+  HersheyFont *font = new HersheyFont();
+  font->read_from_file("/spiffs/futural.jhf");
+
+  ESP_LOGI(TAG, "Starting renderer");
   // Renderer *renderer = new DACRenderer(WORLD_SIZE);
   // Renderer *renderer = new HeltecOLEDRenderer(WORLD_SIZE);
-  Renderer *renderer = new SPIRenderer(WORLD_SIZE);
+  Renderer *renderer = new SPIRenderer(WORLD_SIZE, font);
   // Renderer *renderer = new I2CRenderer(WORLD_SIZE);
   renderer->start();
 
@@ -102,23 +108,22 @@ void app_main()
   game_loop->start();
 
   free_ram = esp_get_free_heap_size();
-  printf("Free ram after world %d\n", free_ram);
+  ESP_LOGI(TAG, "Free ram after world %d", free_ram);
 
   free_ram = esp_get_free_heap_size();
-  printf("Free ram after renderer %d\n", free_ram);
+  ESP_LOGI(TAG, "Free ram after renderer %d", free_ram);
 
   int64_t start = esp_timer_get_time();
   for (int32_t i = 0; i < 60; ++i)
   {
-
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     int64_t end = esp_timer_get_time();
-    printf("%d, World steps %d, FPS %lld, Transactions %d, Free RAM %d\n",
-           i,
-           game_loop->steps,
-           1000 * 1000 * int16_t(renderer->rendered_frames) / (end - start),
-           renderer->transactions,
-           esp_get_free_heap_size());
+    ESP_LOGI(TAG, "%d, World steps %d, FPS %lld, Transactions %d, Free RAM %d",
+             i,
+             game_loop->steps,
+             1000 * 1000 * int16_t(renderer->rendered_frames) / (end - start),
+             renderer->transactions,
+             esp_get_free_heap_size());
   }
   vTaskDelay(5000 / portTICK_PERIOD_MS);
   esp_restart();

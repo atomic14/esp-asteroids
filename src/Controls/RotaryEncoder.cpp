@@ -33,11 +33,11 @@ IRAM_ATTR void _a_interrupt_handler(void *param)
     {
       if (rotary_encoder->_b_value == ON)
       {
-        rotary_encoder->_count--;
+        rotary_encoder->_count++;
       }
       else
       {
-        rotary_encoder->_count++;
+        rotary_encoder->_count--;
       }
     }
   }
@@ -51,13 +51,11 @@ RotaryEncoder::RotaryEncoder(gpio_num_t clck_pin, gpio_num_t di_pin)
   _last_triggered = 0;
   gpio_install_isr_service(0);
   gpio_set_direction(clck_pin, GPIO_MODE_INPUT);
-  gpio_set_pull_mode(clck_pin, GPIO_PULLUP_ONLY);
   gpio_set_direction(di_pin, GPIO_MODE_INPUT);
-  gpio_set_pull_mode(di_pin, GPIO_PULLUP_ONLY);
   // start off with the clk pin in the OFF state waiting for an ON level
   _a_pin_state = OFF;
-  gpio_set_intr_type(clck_pin, ON ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL);
   gpio_isr_handler_add(clck_pin, _a_interrupt_handler, this);
+  gpio_set_intr_type(clck_pin, ON ? GPIO_INTR_HIGH_LEVEL : GPIO_INTR_LOW_LEVEL);
   gpio_intr_enable(clck_pin);
 }
 

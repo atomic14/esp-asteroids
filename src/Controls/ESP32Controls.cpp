@@ -3,7 +3,7 @@
 #include "Button.hpp"
 #include <math.h>
 
-ESP32Controls::ESP32Controls(RotaryEncoder *rotary_encoder, Button *fire_button) : rotary_encoder(rotary_encoder), fire_button(fire_button)
+ESP32Controls::ESP32Controls(RotaryEncoder *rotary_encoder, Button *fire_button, Button *thrust_button) : rotary_encoder(rotary_encoder), fire_button(fire_button), thrust_button(thrust_button)
 {
 }
 
@@ -14,10 +14,11 @@ bool ESP32Controls::is_firing()
 
 bool ESP32Controls::is_thrusting()
 {
-  return false;
+  return thrust_button->get_button_pushed();
+  ;
 }
 
 float ESP32Controls::get_direction()
 {
-  return 2 * (float(rotary_encoder->get_count()) / 24.0f) * M_PI;
+  return -3.0 * (float(rotary_encoder->get_count()) / 24.0f) * M_PI;
 }

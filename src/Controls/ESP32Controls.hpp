@@ -11,9 +11,10 @@ class ESP32Controls : public Controls
 private:
   RotaryEncoder *rotary_encoder;
   Button *fire_button;
+  Button *thrust_button;
 
 public:
-  ESP32Controls(RotaryEncoder *rotary_encoder, Button *fire_button);
+  ESP32Controls(RotaryEncoder *rotary_encoder, Button *fire_button, Button *thrust_button);
   bool is_firing();
   bool is_thrusting();
   float get_direction();

@@ -15,6 +15,7 @@ class SoundFX
 public:
   SoundFX(I2SOutput *output);
   void fire();
+  void thrust();
   void bang_large();
   void bang_medium();
   void bang_small();

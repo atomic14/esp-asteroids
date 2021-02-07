@@ -39,21 +39,24 @@ void IRAM_ATTR SPIRenderer::draw()
       const DrawInstruction_t &instruction = render_buffer->display_frame->at(draw_position);
       hold = instruction.hold;
       // channel A
+      int x = 4095 - instruction.x;
+      int y = 4095 - instruction.y;
       spi_transaction_t t1;
       memset(&t1, 0, sizeof(t1)); //Zero out the transaction
       t1.length = 16;
       t1.flags = SPI_TRANS_USE_TXDATA;
-      t1.tx_data[0] = 0b11010000 | ((instruction.x >> 8) & 0xF);
-      t1.tx_data[1] = instruction.x & 255;
+      t1.tx_data[0] = 0b01010000 | ((x >> 8) & 0xF);
+      t1.tx_data[1] = x & 255;
       spi_device_polling_transmit(spi, &t1);
       // channel B
       spi_transaction_t t2;
       memset(&t2, 0, sizeof(t2)); //Zero out the transaction
       t2.length = 16;
       t2.flags = SPI_TRANS_USE_TXDATA;
-      t2.tx_data[0] = 0b01010000 | ((instruction.y >> 8) & 0xF);
-      t2.tx_data[1] = instruction.y & 255;
+      t2.tx_data[0] = 0b11010000 | ((y >> 8) & 0xF);
+      t2.tx_data[1] = y & 255;
       spi_device_polling_transmit(spi, &t2);
+
       // set the laser state
       set_laser(instruction.laser);
 
@@ -75,7 +78,7 @@ void IRAM_ATTR SPIRenderer::draw()
   timer_spinlock_give(TIMER_GROUP_0);
 }
 
-SPIRenderer::SPIRenderer(float world_size)
+SPIRenderer::SPIRenderer(float world_size, HersheyFont *font)
 {
   draw_position = 0;
   hold = 0;
@@ -84,7 +87,8 @@ SPIRenderer::SPIRenderer(float world_size)
       1024, 3072,
       2048,
       2048,
-      1024.0f / world_size);
+      1024.0f / world_size,
+      font);
   // 0, 4095,
   // 0, 4095,
   // 2048,
@@ -101,7 +105,7 @@ void spi_timer_setup(void *param)
       .intr_type = TIMER_INTR_LEVEL,
       .counter_dir = TIMER_COUNT_UP,
       .auto_reload = TIMER_AUTORELOAD_EN,
-      .divider = 8000}; // default clock source is APB
+      .divider = 4000}; // default clock source is APB
   timer_init(TIMER_GROUP_0, TIMER_0, &config);
 
   // Timer's counter will initially start from value below.
