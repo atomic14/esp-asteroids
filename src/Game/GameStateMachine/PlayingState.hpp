@@ -6,6 +6,8 @@ class PlayingState : public GameState
 {
 private:
   float firing_cooldown;
+  bool is_respawning;
+  float respawn_cooldown;
 
 public:
   void enter(Game *game);
@@ -13,6 +15,10 @@ public:
   void exit(Game *game);
   const char *get_text()
   {
+    if (is_respawning)
+    {
+      return "PRESS FIRE";
+    }
     return nullptr;
   }
 };

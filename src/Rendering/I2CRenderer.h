@@ -5,7 +5,7 @@
 #include "Renderer.h"
 
 class RenderBuffer;
-class HersheyFont;
+class Font;
 
 class I2CRenderer : public Renderer
 {
@@ -14,7 +14,7 @@ private:
   void IRAM_ATTR draw();
 
 public:
-  I2CRenderer(float world_size, HersheyFont *font);
+  I2CRenderer(float world_size, Font *font);
   void start();
   friend void i2c_draw_task(void *param);
 };

@@ -59,7 +59,4 @@ public:
 
     virtual b2Vec2 *getPoints();
     virtual int getNumPoints();
-    void destroy()
-    {
-    }
 };

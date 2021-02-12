@@ -11,7 +11,7 @@
 #include <vector>
 #include "box2d/box2d.h"
 
-class HersheyFont;
+class Font;
 
 typedef struct
 {
@@ -33,7 +33,7 @@ private:
     int16_t _centerX;
     int16_t _centerY;
     float _scale;
-    HersheyFont *_font;
+    Font *_font;
 
     inline int16_t calc_x(float x)
     {
@@ -43,11 +43,12 @@ private:
     {
         return int16_t(std::max(std::min(_maxY, int16_t(_centerY + _scale * y)), _minY));
     }
-    void renderSegment(bool laser, b2Vec2 start, const b2Vec2 &end);
+    void renderSegment(bool laser, b2Vec2 start, const b2Vec2 &end, int min_hold = 1);
     b2Vec2 draw_text(b2Vec2 start, float x, float y, const char *text);
+    b2Vec2 measure_text(const char *text);
 
 public:
-    RenderBuffer(int minX, int maxX, int minY, int maxY, int centerX, int centerY, float scale, HersheyFont *font);
+    RenderBuffer(int minX, int maxX, int minY, int maxY, int centerX, int centerY, float scale, Font *font);
     std::vector<DrawInstruction_t> *display_frame = NULL;
     std::vector<DrawInstruction_t> *drawing_frame = NULL;
     bool needs_render = false;

@@ -82,7 +82,7 @@ void DACRenderer::start()
   xTaskCreatePinnedToCore(timer_setup, "Draw Task", 4096, this, 0, &timer_setup_handle, 1);
 }
 
-DACRenderer::DACRenderer(float world_size, HersheyFont *font)
+DACRenderer::DACRenderer(float world_size, Font *font)
 {
   render_buffer = new RenderBuffer(
       0, 255,

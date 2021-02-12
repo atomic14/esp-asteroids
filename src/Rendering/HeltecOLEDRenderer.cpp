@@ -144,7 +144,7 @@ void IRAM_ATTR oled_draw_task(void *param)
   }
 }
 
-HeltecOLEDRenderer::HeltecOLEDRenderer(float world_size, HersheyFont *font)
+HeltecOLEDRenderer::HeltecOLEDRenderer(float world_size, Font *font)
 {
   render_buffer = new RenderBuffer(
       0, 64,

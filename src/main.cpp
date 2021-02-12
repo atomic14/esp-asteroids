@@ -19,7 +19,8 @@
 #include "Audio/I2SOutput.h"
 #include "Audio/WAVFile.h"
 #include "Audio/SoundFX.h"
-#include "HersheyFonts/HersheyFont.hpp"
+// #include "Fonts/HersheyFont.hpp"
+#include "Fonts/SimpleFont.hpp"
 
 #define WORLD_SIZE 30
 #define ROTARY_ENCODER_CLK_GPIO GPIO_NUM_19
@@ -94,8 +95,9 @@ void app_main()
   Game *game = new Game(WORLD_SIZE, controls, sound_fx);
 
   ESP_LOGI(TAG, "Loading font");
-  HersheyFont *font = new HersheyFont();
-  font->read_from_file("/spiffs/futural.jhf");
+  // HersheyFont *font = new HersheyFont();
+  // font->read_from_file("/spiffs/futural.jhf");
+  SimpleFont *font = new SimpleFont();
 
   ESP_LOGI(TAG, "Starting renderer");
   // Renderer *renderer = new DACRenderer(WORLD_SIZE);
@@ -125,6 +127,9 @@ void app_main()
              renderer->transactions,
              esp_get_free_heap_size());
   }
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  while (true)
+  {
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
+  }
   esp_restart();
 }

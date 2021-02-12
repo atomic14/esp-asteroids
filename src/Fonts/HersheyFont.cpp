@@ -58,7 +58,7 @@ void HersheyFont::parse(const char *data)
   while (*data != '\0')
   {
     data = skip_newlines(data);
-    HersheyCharacter_t character;
+    Character character;
     // 0-4 number (not used)
     // 5-7 number of vertices
     // 8   left pos
@@ -84,10 +84,18 @@ void HersheyFont::parse(const char *data)
         y = *(data++);
         i++;
       }
-      character.commands.push_back({.x = hersheyCharToNumber(x),
-                                    .y = hersheyCharToNumber(y),
-                                    .draw = draw});
+      character.commands.push_back({b2Vec2(hersheyCharToNumber(x), hersheyCharToNumber(y)), .draw = draw});
     }
     chars.push_back(character);
   }
+}
+
+const Character *HersheyFont::get_character(char c)
+{
+  int char_index = c - ' ';
+  if (char_index >= 0 && char_index < chars.size())
+  {
+    return &chars[char_index];
+  }
+  return nullptr;
 }

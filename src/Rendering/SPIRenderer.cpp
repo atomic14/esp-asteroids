@@ -78,7 +78,7 @@ void IRAM_ATTR SPIRenderer::draw()
   timer_spinlock_give(TIMER_GROUP_0);
 }
 
-SPIRenderer::SPIRenderer(float world_size, HersheyFont *font)
+SPIRenderer::SPIRenderer(float world_size, Font *font)
 {
   draw_position = 0;
   hold = 0;

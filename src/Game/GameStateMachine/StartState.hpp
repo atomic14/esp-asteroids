@@ -2,7 +2,7 @@
 
 #include "GameState.hpp"
 
-class StartState: public GameState
+class StartState : public GameState
 {
 public:
   void enter(Game *game);
@@ -10,6 +10,6 @@ public:
   void exit(Game *game);
   virtual const char *get_text()
   {
-    return "Press Fire!";
+    return "PRESS FIRE";
   }
 };

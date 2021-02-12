@@ -4,6 +4,7 @@
 #include "Renderer.h"
 
 class RenderBuffer;
+class Font;
 
 class DACRenderer : public Renderer
 {
@@ -12,7 +13,7 @@ private:
   void IRAM_ATTR draw();
 
 public:
-  DACRenderer(float world_size, HersheyFont *font);
+  DACRenderer(float world_size, Font *font);
   void start();
   friend void draw_timer(void *para);
 };

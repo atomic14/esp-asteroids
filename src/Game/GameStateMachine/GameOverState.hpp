@@ -10,6 +10,6 @@ public:
   void exit(Game *game);
   const char *get_text()
   {
-    return "Game Over!";
+    return "GAME OVER";
   }
 };

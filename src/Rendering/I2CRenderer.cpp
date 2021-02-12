@@ -60,7 +60,7 @@ void IRAM_ATTR I2CRenderer::draw()
   }
 }
 
-I2CRenderer::I2CRenderer(float world_size, HersheyFont *font)
+I2CRenderer::I2CRenderer(float world_size, Font *font)
 {
   render_buffer = new RenderBuffer(
       0, 4096,
