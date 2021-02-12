@@ -12,12 +12,7 @@ static const char *TAG = "GAME";
 
 void PlayingState::enter(Game *game)
 {
-  // clear down the current game state
-  game->reset();
-  game->add_asteroids();
-  game->add_player_ship();
-  game->add_lives();
-  game->set_score(0);
+  game->start_new_game();
   // clear our own state down
   firing_cooldown = 0;
   respawn_cooldown = 0;

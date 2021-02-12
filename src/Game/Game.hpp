@@ -54,6 +54,7 @@ private:
 
 public:
     Game(float size, Controls *controls, SoundFX *sound_fx);
+    void start_new_game();
     std::list<GameObject *> &getObjects()
     {
         return objects;

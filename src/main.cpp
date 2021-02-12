@@ -7,10 +7,7 @@
 #include "esp_spiffs.h"
 
 #include "WiFi.h"
-#include "Rendering/I2CRenderer.h"
 #include "Rendering/SPIRenderer.h"
-#include "Rendering/DACRenderer.h"
-#include "Rendering/HeltecOLEDRenderer.hpp"
 #include "Game/GameLoop.h"
 #include "Game/Game.hpp"
 #include "Controls/RotaryEncoder.hpp"

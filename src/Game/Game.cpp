@@ -47,6 +47,16 @@ Game::Game(float size, Controls *controls, SoundFX *sound_fx)
     this->lives = 3;
 }
 
+void Game::start_new_game()
+{
+    // clear down the current game state
+    reset();
+    add_asteroids();
+    add_player_ship();
+    add_lives();
+    set_score(0);
+}
+
 void Game::reset()
 {
     // clean up any old objects that we might have

@@ -90,7 +90,10 @@ void I2SOutput::start()
         .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S),
         .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
         .dma_buf_count = 4,
-        .dma_buf_len = 64};
+        .dma_buf_len = 64,
+        .use_apll = false,
+        .tx_desc_auto_clear = true,
+        .fixed_mclk = 0};
 
     //install and start i2s driver
     i2s_driver_install(I2S_NUM_1, &i2sConfig, 4, &m_i2sQueue);
