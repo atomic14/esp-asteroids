@@ -7,6 +7,8 @@
 #include "esp_spiffs.h"
 
 #include "WiFi.h"
+#include "Rendering/DACRenderer.h"
+#include "Rendering/HeltecOLEDRenderer.hpp"
 #include "Rendering/SPIRenderer.h"
 #include "Game/GameLoop.h"
 #include "Game/Game.hpp"
@@ -22,6 +24,8 @@
 #define WORLD_SIZE 30
 #define ROTARY_ENCODER_CLK_GPIO GPIO_NUM_19
 #define ROTARY_ENCODER_DI_GPIO GPIO_NUM_18
+// WARNING - this pin conflicts with the HELTEC OLED displat
+// if using the heltec renderer switch to another pin.
 #define FIRE_GPIO GPIO_NUM_4
 #define THRUST_GPIO GPIO_NUM_5
 
@@ -97,10 +101,9 @@ void app_main()
   SimpleFont *font = new SimpleFont();
 
   ESP_LOGI(TAG, "Starting renderer");
-  // Renderer *renderer = new DACRenderer(WORLD_SIZE);
-  // Renderer *renderer = new HeltecOLEDRenderer(WORLD_SIZE);
+  // Renderer *renderer = new DACRenderer(WORLD_SIZE, font);
+  // Renderer *renderer = new HeltecOLEDRenderer(WORLD_SIZE, font);
   Renderer *renderer = new SPIRenderer(WORLD_SIZE, font);
-  // Renderer *renderer = new I2CRenderer(WORLD_SIZE);
   renderer->start();
 
   GameLoop *game_loop = new GameLoop(game, renderer->get_render_buffer());

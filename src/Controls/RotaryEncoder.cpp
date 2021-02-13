@@ -52,6 +52,9 @@ RotaryEncoder::RotaryEncoder(gpio_num_t clck_pin, gpio_num_t di_pin)
   gpio_install_isr_service(0);
   gpio_set_direction(clck_pin, GPIO_MODE_INPUT);
   gpio_set_direction(di_pin, GPIO_MODE_INPUT);
+  gpio_set_pull_mode(clck_pin, GPIO_PULLDOWN_ONLY);
+  gpio_set_pull_mode(di_pin, GPIO_PULLDOWN_ONLY);
+
   // start off with the clk pin in the OFF state waiting for an ON level
   _a_pin_state = OFF;
   gpio_isr_handler_add(clck_pin, _a_interrupt_handler, this);

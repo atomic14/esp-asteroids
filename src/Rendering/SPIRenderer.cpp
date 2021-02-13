@@ -17,6 +17,7 @@ void IRAM_ATTR spi_draw_timer(void *para)
   timer_spinlock_take(TIMER_GROUP_0);
   SPIRenderer *renderer = static_cast<SPIRenderer *>(para);
   renderer->draw();
+  timer_spinlock_give(TIMER_GROUP_0);
 }
 
 void IRAM_ATTR SPIRenderer::draw()
@@ -46,7 +47,7 @@ void IRAM_ATTR SPIRenderer::draw()
       t1.length = 16;
       t1.flags = SPI_TRANS_USE_TXDATA;
       t1.tx_data[0] = 0b01010000 | ((x >> 8) & 0xF);
-      t1.tx_data[1] = x & 255;
+      t1.tx_data[1] = x & 0xFF;
       spi_device_polling_transmit(spi, &t1);
       // channel B
       spi_transaction_t t2;
@@ -54,7 +55,7 @@ void IRAM_ATTR SPIRenderer::draw()
       t2.length = 16;
       t2.flags = SPI_TRANS_USE_TXDATA;
       t2.tx_data[0] = 0b11010000 | ((y >> 8) & 0xF);
-      t2.tx_data[1] = y & 255;
+      t2.tx_data[1] = y & 0xFF;
       spi_device_polling_transmit(spi, &t2);
 
       // set the laser state
@@ -75,7 +76,6 @@ void IRAM_ATTR SPIRenderer::draw()
       draw_position = 0;
     }
   }
-  timer_spinlock_give(TIMER_GROUP_0);
 }
 
 SPIRenderer::SPIRenderer(float world_size, Font *font)
