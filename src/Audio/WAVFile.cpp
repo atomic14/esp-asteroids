@@ -67,7 +67,7 @@ WAVFile::WAVFile(const char *file_name)
                 samples = (uint8_t *)malloc(wav_header.data_bytes);
                 number_samples = wav_header.data_bytes;
                 fread(samples, 1, number_samples, fp);
-                printf("Read %d samples from %s\n", number_samples, file_name);
+                ESP_LOGI(TAG, "Read %d samples from %s\n", number_samples, file_name);
             }
         }
         fclose(fp);

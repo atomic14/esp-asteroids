@@ -5,7 +5,7 @@
 #include "../../Audio/SoundFX.h"
 #include "../GameObjects/ShipObject.hpp"
 
-#define FIRE_COOLDOWN 0.1f
+#define FIRE_COOLDOWN 0.2f
 #define RESPAWN_COOLDOWN 1.0f
 
 static const char *TAG = "GAME";
@@ -16,6 +16,7 @@ void PlayingState::enter(Game *game)
   // clear our own state down
   firing_cooldown = 0;
   respawn_cooldown = 0;
+  thrust_sound_cooldown = 0;
 }
 
 GAME_STATE PlayingState::handle(Game *game, float elapsed_time)
@@ -57,8 +58,16 @@ GAME_STATE PlayingState::handle(Game *game, float elapsed_time)
     // is the user pushing the thrust button?
     if (game->get_controls()->is_thrusting())
     {
-      game->get_ship()->thrust(500 * elapsed_time);
-      game->get_sound_fx()->thrust();
+      game->get_ship()->thrust(250 * elapsed_time);
+      if (thrust_sound_cooldown <= 0)
+      {
+        game->get_sound_fx()->thrust();
+        thrust_sound_cooldown = 0.25;
+      }
+      else
+      {
+        thrust_sound_cooldown -= elapsed_time;
+      }
       game->get_ship()->set_is_thrusting(true);
     }
     else

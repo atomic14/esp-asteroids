@@ -26,6 +26,7 @@ private:
     int score;
     int lives;
     bool _is_ship_hit;
+    bool _did_asteroids_collide;
     float asteroid_speed;
     b2World *world;
     ShipObject *ship;

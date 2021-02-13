@@ -112,21 +112,15 @@ void app_main()
   free_ram = esp_get_free_heap_size();
   ESP_LOGI(TAG, "Free ram after renderer %d", free_ram);
 
-  int64_t start = esp_timer_get_time();
-  for (int32_t i = 0; i < 60; ++i)
+  float start = esp_timer_get_time() / 1E6f;
+  while (true)
   {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    int64_t end = esp_timer_get_time();
-    ESP_LOGI(TAG, "%d, World steps %d, FPS %lld, Transactions %d, Free RAM %d",
-             i,
+    float end = esp_timer_get_time() / 1E6f;
+    ESP_LOGI(TAG, "World steps %d, FPS %.0f, Transactions %d, Free RAM %d",
              game_loop->steps,
-             1000 * 1000 * int16_t(renderer->rendered_frames) / (end - start),
+             renderer->rendered_frames / (end - start),
              renderer->transactions,
              esp_get_free_heap_size());
   }
-  while (true)
-  {
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
-  }
-  esp_restart();
 }

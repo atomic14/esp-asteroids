@@ -50,8 +50,6 @@ void i2sWriterTask(void *param)
                             // output it
                             frames[i].left = sample * 16383;
                             frames[i].right = sample * 16383;
-                            // frames[i].left = (i % 100 < 50) ? 1000 : -1000;
-                            // frames[i].right = (i % 100 < 50) ? 1000 : -1000;
                         }
                         // how many bytes do we now have to send
                         availableBytes = NUM_FRAMES_TO_SEND * sizeof(Frame_t);

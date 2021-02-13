@@ -11,23 +11,23 @@ SoundFX::SoundFX(I2SOutput *output) : output(output)
   thrust_wav = new WAVFile("/spiffs/thrust.wav");
 }
 
-void SoundFX::fire()
+void SoundFX::fire(float volume_adjust)
 {
-  output->add_wav_file(fire_wav, 0.2);
+  output->add_wav_file(fire_wav, volume_adjust * 0.5);
 }
-void SoundFX::thrust()
+void SoundFX::thrust(float volume_adjust)
 {
-  output->add_wav_file(thrust_wav, 0.2);
+  output->add_wav_file(thrust_wav, volume_adjust * 0.5);
 }
-void SoundFX::bang_large()
+void SoundFX::bang_large(float volume_adjust)
 {
-  output->add_wav_file(bang_large_wav, 0.5);
+  output->add_wav_file(bang_large_wav, volume_adjust * 0.5);
 }
-void SoundFX::bang_medium()
+void SoundFX::bang_medium(float volume_adjust)
 {
-  output->add_wav_file(bang_medium_wav, 0.25);
+  output->add_wav_file(bang_medium_wav, volume_adjust * 0.5);
 }
-void SoundFX::bang_small()
+void SoundFX::bang_small(float volume_adjust)
 {
-  output->add_wav_file(bang_small_wav, 0.125);
+  output->add_wav_file(bang_small_wav, volume_adjust * 0.5);
 }

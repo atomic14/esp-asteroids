@@ -89,11 +89,6 @@ SPIRenderer::SPIRenderer(float world_size, Font *font)
       2048,
       1024.0f / world_size,
       font);
-  // 0, 4095,
-  // 0, 4095,
-  // 2048,
-  // 2048,
-  // 2048.0f / world_size);
 }
 
 void spi_timer_setup(void *param)

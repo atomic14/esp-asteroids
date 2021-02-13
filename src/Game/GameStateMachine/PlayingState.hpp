@@ -8,6 +8,7 @@ private:
   float firing_cooldown;
   bool is_respawning;
   float respawn_cooldown;
+  float thrust_sound_cooldown;
 
 public:
   void enter(Game *game);

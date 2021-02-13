@@ -63,7 +63,7 @@ void HersheyFont::parse(const char *data)
     // 5-7 number of vertices
     // 8   left pos
     // 9   right pos
-    // 10- vertices
+    // 10* vertices encoded as offsets from 'R'
     // newline
     data += 5;
     int vertex_count = str2int(data, 3);

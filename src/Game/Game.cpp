@@ -20,9 +20,9 @@
 #include <set>
 
 #define MAX_BULLETS_INFLIGHT 10
-#define BULLET_SPEED 80
-#define BULLET_MAX_AGE 0.5
-#define ASTEROID_INITIAL_SPEED 10
+#define BULLET_SPEED 40
+#define BULLET_MAX_AGE 1.0
+#define ASTEROID_INITIAL_SPEED 7.5
 
 static const char *TAG = "game";
 
@@ -73,6 +73,7 @@ void Game::reset()
     score = 0;
     lives = 3;
     _is_ship_hit = false;
+    _did_asteroids_collide = false;
 }
 
 void Game::add_player_ship()
@@ -150,11 +151,11 @@ void Game::reset_player_ship()
 void Game::add_asteroids()
 {
     objects.push_back(new DynamicObject(world, ASTEROID, asteroid1Points, asteroid1PointsCount, b2Vec2(25, 25), 0, 10, b2Vec2(asteroid_speed, asteroid_speed), 0));
-    printf("Created asteroid1\n");
+    ESP_LOGI(TAG, "Created asteroid1");
     objects.push_back(new DynamicObject(world, ASTEROID, asteroid2Points, asteroid2PointsCount, b2Vec2(-25, -25), 0, 10, b2Vec2(-asteroid_speed, asteroid_speed), 0));
-    printf("Created asteroid2\n");
+    ESP_LOGI(TAG, "Created asteroid2");
     objects.push_back(new DynamicObject(world, ASTEROID, asteroid3Points, asteroid3PointsCount, b2Vec2(-25, 0), 0, 10, b2Vec2(-asteroid_speed, -asteroid_speed), 0));
-    printf("Created asteroid3\n");
+    ESP_LOGI(TAG, "Created asteroid3");
 }
 
 void Game::add_bullet()
@@ -214,6 +215,11 @@ void Game::process_bullets(float elapsed_time)
 
 void Game::process_asteroids()
 {
+    // play a sounds for it asteroids collided
+    if (_did_asteroids_collide)
+    {
+        sound_fx->bang_small(0.1);
+    }
     // remove any hit asteroids
     for (auto asteroid : hitAsteroids)
     {
@@ -249,7 +255,7 @@ void Game::process_asteroids()
                            position.y + scale * sin(angle)),
                     0,
                     scale,
-                    b2Vec2(asteroid_speed * cos(angle), 10 * sin(angle)),
+                    b2Vec2(asteroid_speed * cos(angle), asteroid_speed * sin(angle)),
                     0);
                 newAsteroid->setAge(asteroid->getAge() + 1);
                 objects.push_back(newAsteroid);
@@ -265,7 +271,7 @@ void Game::process_asteroids()
                            position.y + scale * sin(angle)),
                     0,
                     scale,
-                    b2Vec2(10 * cos(angle), 10 * sin(angle)),
+                    b2Vec2(asteroid_speed * cos(angle), asteroid_speed * sin(angle)),
                     0);
                 newAsteroid->setAge(asteroid->getAge() + 1);
                 objects.push_back(newAsteroid);
@@ -282,6 +288,8 @@ void Game::stepWorld(float elapsedTime)
 {
     // reset the ship hit flat
     _is_ship_hit = false;
+    // reset the asteroids collided flag
+    _did_asteroids_collide = false;
     // step the world forward
     world->Step(elapsedTime, 6, 2);
     // wrap objects around the screen
@@ -322,6 +330,11 @@ void Game::BeginContact(b2Contact *contact)
 {
     GameObject *objA = reinterpret_cast<GameObject *>(contact->GetFixtureA()->GetBody()->GetUserData().pointer);
     GameObject *objB = reinterpret_cast<GameObject *>(contact->GetFixtureB()->GetBody()->GetUserData().pointer);
+    // Asteroid and asteroid collisions - we'll trigger a small bang
+    if (objA->getObjectType() == ASTEROID && objB->getObjectType() == ASTEROID)
+    {
+        _did_asteroids_collide = true;
+    }
     // Asteroid and bullet collisions - need to check both sides as the order is random
     if (objA->getObjectType() == BULLET && objB->getObjectType() == ASTEROID)
     {

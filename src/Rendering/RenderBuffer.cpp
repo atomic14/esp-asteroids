@@ -39,49 +39,10 @@ void RenderBuffer::renderSegment(bool laser, b2Vec2 start, const b2Vec2 &end, in
                               .laser = laser});
 }
 
-b2Vec2 RenderBuffer::draw_text(b2Vec2 start, float x, float y, const char *text)
-{
-    float default_width = _font->get_default_width();
-    float x_scale = _font->get_x_scale();
-    float y_scale = _font->get_y_scale();
-    while (*text != '\0')
-    {
-        const Character *character = _font->get_character(*text);
-        if (character)
-        {
-            const std::vector<FontCoord_t> &commands = character->commands;
-            // draw the character
-            if (commands.size() > 0)
-            {
-                // move to the start of the character
-                b2Vec2 next = b2Vec2(x + (commands[0].coords.x - character->left_pos) * x_scale, y + commands[0].coords.y * y_scale);
-                renderSegment(false, start, next);
-
-                start = next;
-                // draw the character
-                for (int j = 0; j < commands.size(); j++)
-                {
-                    next = b2Vec2(x + (commands[j].coords.x - character->left_pos) * x_scale, y + commands[j].coords.y * y_scale);
-                    renderSegment(commands[j].draw, start, next);
-                    start = next;
-                }
-            }
-            x += (character->right_pos - character->left_pos) * x_scale;
-        }
-        else
-        {
-            x += default_width * x_scale;
-        }
-        text++;
-    }
-    return start;
-}
-
-b2Vec2 RenderBuffer::measure_text(const char *text)
+b2Vec2 RenderBuffer::draw_text(b2Vec2 start, float x, float y, const char *text, bool measure)
 {
     float left = FLT_MAX, right = -FLT_MAX, top = FLT_MAX, bottom = -FLT_MAX;
-    float x = 0;
-    float y = 0;
+
     float default_width = _font->get_default_width();
     float x_scale = _font->get_x_scale();
     float y_scale = _font->get_y_scale();
@@ -100,6 +61,12 @@ b2Vec2 RenderBuffer::measure_text(const char *text)
                 right = std::max(right, next.x);
                 top = std::min(top, next.y);
                 bottom = std::max(bottom, next.y);
+                if (!measure)
+                {
+                    renderSegment(false, start, next);
+                }
+
+                start = next;
                 // draw the character
                 for (int j = 0; j < commands.size(); j++)
                 {
@@ -108,6 +75,11 @@ b2Vec2 RenderBuffer::measure_text(const char *text)
                     right = std::max(right, next.x);
                     top = std::min(top, next.y);
                     bottom = std::max(bottom, next.y);
+                    if (!measure)
+                    {
+                        renderSegment(commands[j].draw, start, next);
+                    }
+                    start = next;
                 }
             }
             x += (character->right_pos - character->left_pos) * x_scale;
@@ -120,7 +92,11 @@ b2Vec2 RenderBuffer::measure_text(const char *text)
         right = std::max(right, x);
         text++;
     }
-    return b2Vec2(right - left, bottom - top);
+    if (measure)
+    {
+        return b2Vec2(right - left, bottom - top);
+    }
+    return start;
 }
 
 GameObject *removeNearest(b2Vec2 search_point, std::list<GameObject *> &objects)
@@ -145,32 +121,15 @@ void RenderBuffer::render_if_needed(Game *game)
     if (needs_render)
     {
         drawing_frame->clear();
+        // start from the top left corner
         b2Vec2 cur(-30, -30);
-
-        /*for (float x = -30; x <= 30; x += 30)
+        // score
+        if (game->show_score())
         {
-            auto next = b2Vec2(x, -30);
-            renderSegment(true, cur, next);
-            cur = next;
+            char tmp[100];
+            sprintf(tmp, "%03d", game->get_score());
+            cur = draw_text(cur, -30, -28, tmp, false);
         }
-        for (float y = -30; y <= 30; y += 30)
-        {
-            auto next = b2Vec2(30, y);
-            renderSegment(true, cur, next);
-            cur = next;
-        }
-        for (float x = 30; x >= -30; x -= 30)
-        {
-            auto next = b2Vec2(x, 30);
-            renderSegment(true, cur, next);
-            cur = next;
-        }
-        for (float y = 30; y >= -30; y -= 30)
-        {
-            auto next = b2Vec2(-30, y);
-            renderSegment(true, cur, next);
-            cur = next;
-        }*/
         std::list<GameObject *> objects_to_draw(game->getObjects());
         // while we still have objects to draw
         while (objects_to_draw.size() > 0)
@@ -187,9 +146,6 @@ void RenderBuffer::render_if_needed(Game *game)
             auto start = b2Vec2(points[0].x * c - points[0].y * s, points[0].x * s + points[0].y * c) + position;
             renderSegment(false, cur, start);
             cur = start;
-            renderSegment(false, cur, cur);
-            renderSegment(false, cur, cur);
-
             for (int i = 0; i < numPoints; i++)
             {
                 // draw each line segment
@@ -197,24 +153,15 @@ void RenderBuffer::render_if_needed(Game *game)
                 renderSegment(true, cur, p);
                 cur = p;
             }
-            renderSegment(true, cur, cur);
-            renderSegment(true, cur, cur);
-        }
-        // score
-        if (game->show_score())
-        {
-            char tmp[100];
-            sprintf(tmp, "%03d", game->get_score());
-            cur = draw_text(cur, -30, -28, tmp);
         }
         // main text
         auto main_text = game->get_main_text();
         if (main_text)
         {
-            b2Vec2 text_size = measure_text(main_text);
-            cur = draw_text(cur, 0.0f - text_size.x / 2.0f, 0.0f - text_size.y / 2.0f, main_text);
+            b2Vec2 text_size = draw_text(cur, 0, 0, main_text, true);
+            cur = draw_text(cur, 0.0f - text_size.x / 2.0f, 0.0f - text_size.y / 2.0f, main_text, false);
         }
-        // move back to 0,0 ready for the next draw pass
+        // move back to the top left corner ready for the next draw pass
         renderSegment(false, cur, b2Vec2(-30, -30));
         // finished rendering
         needs_render = false;

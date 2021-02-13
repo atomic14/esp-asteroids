@@ -44,8 +44,7 @@ private:
         return int16_t(std::max(std::min(_maxY, int16_t(_centerY + _scale * y)), _minY));
     }
     void renderSegment(bool laser, b2Vec2 start, const b2Vec2 &end, int min_hold = 1);
-    b2Vec2 draw_text(b2Vec2 start, float x, float y, const char *text);
-    b2Vec2 measure_text(const char *text);
+    b2Vec2 draw_text(b2Vec2 start, float x, float y, const char *text, bool measure);
 
 public:
     RenderBuffer(int minX, int maxX, int minY, int maxY, int centerX, int centerY, float scale, Font *font);

@@ -27,9 +27,9 @@ DynamicObject::DynamicObject(b2World *world, GAME_OBJECTS objectType, const b2Ve
     // create the fixture
     b2FixtureDef fixtureDef;
     fixtureDef.shape = &shape;
-    fixtureDef.density = objectType == ASTEROID ? 10.0f : 1.0f;
-    fixtureDef.friction = 1.0f;
-    fixtureDef.restitution = 0.8f;
+    fixtureDef.density = objectType == ASTEROID ? 20.0f : 1.0f;
+    fixtureDef.friction = 0.1f;
+    fixtureDef.restitution = 1.0f;
     fixtureDef.filter.groupIndex = objectType == ASTEROID ? 0 : -1;
     body->CreateFixture(&fixtureDef);
   }
