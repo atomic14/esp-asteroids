@@ -65,6 +65,7 @@ void Game::reset()
     {
         delete object;
     }
+
     objects.clear();
     hitAsteroids.clear();
     bullets.clear();
@@ -75,6 +76,7 @@ void Game::reset()
     lives = 3;
     _is_ship_hit = false;
     _did_asteroids_collide = false;
+    asteroid_speed = ASTEROID_INITIAL_SPEED;
 }
 
 void Game::add_player_ship()
