@@ -36,6 +36,7 @@ Game::Game(float size, Controls *controls, SoundFX *sound_fx)
     b2Vec2 gravity(0.0f, 0.0f);
     this->world = new b2World(gravity);
     this->world->SetContactListener(this);
+
     this->asteroid_speed = ASTEROID_INITIAL_SPEED;
 
     game_state_start_handler = new StartState();
@@ -284,7 +285,7 @@ void Game::process_asteroids()
     hitAsteroids.clear();
 }
 
-void Game::stepWorld(float elapsedTime)
+void Game::step_world(float elapsedTime)
 {
     // reset the ship hit flat
     _is_ship_hit = false;

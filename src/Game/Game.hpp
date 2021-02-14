@@ -72,7 +72,7 @@ public:
     {
         return this->ship;
     }
-    void stepWorld(float elapsedTime);
+    void step_world(float elapsedTime);
     void reset();
 
     void add_bullet();

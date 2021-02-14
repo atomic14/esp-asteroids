@@ -31,7 +31,7 @@ void game_task(void *param)
       // work out the elapsed time - it's good to keep this accurate so the physics simulation and any timers are correct
       float cur_time = esp_timer_get_time() / 1E6f;
       float elapsed_time = cur_time - prev_time;
-      game_loop->game->stepWorld(elapsed_time);
+      game_loop->game->step_world(elapsed_time);
       prev_time = cur_time;
       // re-render if we need to
       game_loop->render_buffer->render_if_needed(game_loop->game);

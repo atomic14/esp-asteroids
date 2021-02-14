@@ -96,8 +96,8 @@ void app_main()
   Game *game = new Game(WORLD_SIZE, controls, sound_fx);
 
   ESP_LOGI(TAG, "Loading font");
-  // HersheyFont *font = new HersheyFont();
-  // font->read_from_file("/spiffs/futural.jhf");
+  //HersheyFont *font = new HersheyFont();
+  //font->read_from_file("/spiffs/futural.jhf");
   SimpleFont *font = new SimpleFont();
 
   ESP_LOGI(TAG, "Starting renderer");
