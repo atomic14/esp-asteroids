@@ -1,24 +1,23 @@
 #include "Shapes.hpp"
 
 const b2Vec2 shipPoints[] = {
-    b2Vec2(0.2877956623691139, 0.5),
-    b2Vec2(4.728071212635484e-8, -0.49999999999999994),
-    b2Vec2(-0.287795662369115, 0.5),
-    b2Vec2(0.2877956623691139, 0.5),
+    b2Vec2(0.3, 0.5),
+    b2Vec2(0, -0.49999999999999994),
+    b2Vec2(-0.3, 0.5),
+    b2Vec2(0.3, 0.5),
 };
 const int shipPointsCount = 4;
 
 const b2Vec2 shipThrustPoints[] = {
-    b2Vec2(0.2877956623691139, 0.5),
+    b2Vec2(0.3, 0.5),
     b2Vec2(0, -0.49999999999999994),
-    b2Vec2(-0.287795662369115, 0.5),
-    b2Vec2(0.2877956623691139, 0.5),
+    b2Vec2(-0.3, 0.5),
+    b2Vec2(0.3, 0.5),
     // some extra points for when we are thrusting
-    b2Vec2(0.25, 0.5),
     b2Vec2(0.125, 0.7),
     b2Vec2(0.0, 0.5),
     b2Vec2(-0.125, 0.7),
-    b2Vec2(-0.25, 0.5),
+    b2Vec2(-0.3, 0.5),
 };
 const int shipThrustPointsCount = 9;
 
