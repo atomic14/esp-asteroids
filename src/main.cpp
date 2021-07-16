@@ -12,7 +12,8 @@
 #include "Rendering/SPIRenderer.h"
 #include "Game/GameLoop.h"
 #include "Game/Game.hpp"
-#include "Controls/RotaryEncoder.hpp"
+#include "Controls/MechanicalRotaryEncoder.hpp"
+// #include "Controls/MagneticRotaryEncoder.hpp"
 #include "Controls/Button.hpp"
 #include "Controls/ESP32Controls.hpp"
 #include "Audio/I2SOutput.h"
@@ -24,10 +25,16 @@
 #define WORLD_SIZE 30
 #define ROTARY_ENCODER_CLK_GPIO GPIO_NUM_19
 #define ROTARY_ENCODER_DI_GPIO GPIO_NUM_18
+
+#define MAGNETIC_ROTARY_ENCODER_CS_GPIO GPIO_NUM_2
+#define MAGNETIC_ROTARY_ENCODER_CLK_GPIO GPIO_NUM_13
+#define MAGNETIC_ROTARY_ENCODER_MISO_GPIO GPIO_NUM_12
+#define MAGNETIC_ROTARY_ENCODER_MOSI_GPIO GPIO_NUM_14
+
 // WARNING - this pin conflicts with the HELTEC OLED displat
 // if using the heltec renderer switch to another pin.
-#define FIRE_GPIO GPIO_NUM_4
-#define THRUST_GPIO GPIO_NUM_5
+#define FIRE_GPIO GPIO_NUM_15
+#define THRUST_GPIO GPIO_NUM_4
 
 extern "C"
 {
@@ -80,7 +87,12 @@ void app_main()
   ESP_LOGI(TAG, "Free ram after SoundFX %d", free_ram);
 
   ESP_LOGI(TAG, "Creating controls");
-  RotaryEncoder *rotary_encoder = new RotaryEncoder(ROTARY_ENCODER_CLK_GPIO, ROTARY_ENCODER_DI_GPIO);
+  // MagneticRotaryEncoder *rotary_encoder = new MagneticRotaryEncoder(
+  //     MAGNETIC_ROTARY_ENCODER_CS_GPIO,
+  //     MAGNETIC_ROTARY_ENCODER_CLK_GPIO,
+  //     MAGNETIC_ROTARY_ENCODER_MISO_GPIO,
+  //     MAGNETIC_ROTARY_ENCODER_MOSI_GPIO);
+  RotaryEncoder *rotary_encoder = new MechanicalRotaryEncoder(ROTARY_ENCODER_CLK_GPIO, ROTARY_ENCODER_DI_GPIO);
 
   free_ram = esp_get_free_heap_size();
   ESP_LOGI(TAG, "Free ram after RotaryEncoder %d", free_ram);

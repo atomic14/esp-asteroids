@@ -1,5 +1,7 @@
 {
   "files.associations": {
-    "esp32controls cpp": "cpp"
+    "*.rb": "ruby",
+    "esp32controls cpp": "cpp",
+    "new": "cpp"
   }
 }

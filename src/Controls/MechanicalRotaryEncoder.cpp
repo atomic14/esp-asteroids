@@ -1,7 +1,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_timer.h>
-#include "RotaryEncoder.hpp"
+#include "MechanicalRotaryEncoder.hpp"
 
 #define ON 0
 #define OFF 1
@@ -9,7 +9,7 @@
 
 IRAM_ATTR void _a_interrupt_handler(void *param)
 {
-  auto rotary_encoder = static_cast<RotaryEncoder *>(param);
+  auto rotary_encoder = static_cast<MechanicalRotaryEncoder *>(param);
   int64_t now = esp_timer_get_time();
   if (rotary_encoder->_a_pin_state)
   {
@@ -43,7 +43,7 @@ IRAM_ATTR void _a_interrupt_handler(void *param)
   }
 }
 
-RotaryEncoder::RotaryEncoder(gpio_num_t clck_pin, gpio_num_t di_pin)
+MechanicalRotaryEncoder::MechanicalRotaryEncoder(gpio_num_t clck_pin, gpio_num_t di_pin)
 {
   _count = 0;
   _a_pin = clck_pin;
@@ -62,7 +62,7 @@ RotaryEncoder::RotaryEncoder(gpio_num_t clck_pin, gpio_num_t di_pin)
   gpio_intr_enable(clck_pin);
 }
 
-RotaryEncoder::~RotaryEncoder()
+MechanicalRotaryEncoder::~MechanicalRotaryEncoder()
 {
   gpio_intr_disable(_a_pin);
   gpio_isr_handler_remove(_a_pin);
