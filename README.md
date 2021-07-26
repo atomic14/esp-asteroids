@@ -1,4 +1,3 @@
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Z8Z734F5Y)
 # ESP32 Asteroids
 
 A simple implementation of the classic arcade game Asteroids on the ESP32 using a laser and mirrors.
