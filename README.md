@@ -14,3 +14,9 @@ The project is built using [PlatformIO](https://platformio.org/) and uses the Es
 WROVER module, but it should work on a WROOM as well - though there may be some issues with running out of memory.
 
 The code is still under development. There are some bugs and issues to be found.
+
+Make sure when you clone the repository you use the `---recursive` flag:
+
+```
+git clone --recursive git@github.com:atomic14/esp-asteroids.git
+```
